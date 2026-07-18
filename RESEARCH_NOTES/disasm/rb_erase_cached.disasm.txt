@@ -1,0 +1,25 @@
+
+D:/CVE-2026-43499/vmlinux_extracted:	file format elf64-littleaarch64
+
+Disassembly of section .kernel:
+
+ffffffc080128074 <rb_erase_cached>:
+ffffffc080128074: d503233f     	paciasp
+ffffffc080128078: a9be7bfd     	stp	x29, x30, [sp, #-0x20]!
+ffffffc08012807c: a9014ff4     	stp	x20, x19, [sp, #0x10]
+ffffffc080128080: 910003fd     	mov	x29, sp
+ffffffc080128084: f9400428     	ldr	x8, [x1, #0x8]
+ffffffc080128088: aa0103f3     	mov	x19, x1
+ffffffc08012808c: aa0003f4     	mov	x20, x0
+ffffffc080128090: eb00011f     	cmp	x8, x0
+ffffffc080128094: 54000081     	b.ne	0xffffffc0801280a4 <rb_erase_cached+0x30>
+ffffffc080128098: aa1403e0     	mov	x0, x20
+ffffffc08012809c: 943c17ab     	bl	0xffffffc08102df48 <rb_next>
+ffffffc0801280a0: f9000660     	str	x0, [x19, #0x8]
+ffffffc0801280a4: aa1403e0     	mov	x0, x20
+ffffffc0801280a8: aa1303e1     	mov	x1, x19
+ffffffc0801280ac: 943c1666     	bl	0xffffffc08102da44 <rb_erase>
+ffffffc0801280b0: a9414ff4     	ldp	x20, x19, [sp, #0x10]
+ffffffc0801280b4: a8c27bfd     	ldp	x29, x30, [sp], #0x20
+ffffffc0801280b8: d50323bf     	autiasp
+ffffffc0801280bc: d65f03c0     	ret

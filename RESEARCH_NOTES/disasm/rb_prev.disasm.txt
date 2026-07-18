@@ -1,0 +1,49 @@
+
+D:/CVE-2026-43499/vmlinux_extracted:	file format elf64-littleaarch64
+
+Disassembly of section .kernel:
+
+ffffffc08102df9c <rb_prev>:
+ffffffc08102df9c: f9400009     	ldr	x9, [x0]
+ffffffc08102dfa0: eb00013f     	cmp	x9, x0
+ffffffc08102dfa4: 54000061     	b.ne	0xffffffc08102dfb0 <rb_prev+0x14>
+ffffffc08102dfa8: aa1f03e0     	mov	x0, xzr
+ffffffc08102dfac: d65f03c0     	ret
+ffffffc08102dfb0: f9400809     	ldr	x9, [x0, #0x10]
+ffffffc08102dfb4: aa0003e8     	mov	x8, x0
+ffffffc08102dfb8: b4000129     	cbz	x9, 0xffffffc08102dfdc <rb_prev+0x40>
+ffffffc08102dfbc: aa0903e0     	mov	x0, x9
+ffffffc08102dfc0: f9400529     	ldr	x9, [x9, #0x8]
+ffffffc08102dfc4: b5ffffc9     	cbnz	x9, 0xffffffc08102dfbc <rb_prev+0x20>
+ffffffc08102dfc8: d65f03c0     	ret
+ffffffc08102dfcc: f9400809     	ldr	x9, [x0, #0x10]
+ffffffc08102dfd0: eb09011f     	cmp	x8, x9
+ffffffc08102dfd4: aa0003e8     	mov	x8, x0
+ffffffc08102dfd8: 54ffff81     	b.ne	0xffffffc08102dfc8 <rb_prev+0x2c>
+ffffffc08102dfdc: f9400109     	ldr	x9, [x8]
+ffffffc08102dfe0: f27ef520     	ands	x0, x9, #0xfffffffffffffffc
+ffffffc08102dfe4: 54ffff41     	b.ne	0xffffffc08102dfcc <rb_prev+0x30>
+ffffffc08102dfe8: 17fffff8     	b	0xffffffc08102dfc8 <rb_prev+0x2c>
+ffffffc08102dfec: 4e9eae47     	usmmla	v7.4s, v18.16b, v30.16b
+
+ffffffc08102dff0 <rb_replace_node>:
+ffffffc08102dff0: a940a40a     	ldp	x10, x9, [x0, #0x8]
+ffffffc08102dff4: f9400008     	ldr	x8, [x0]
+ffffffc08102dff8: f9000028     	str	x8, [x1]
+ffffffc08102dffc: a900a42a     	stp	x10, x9, [x1, #0x8]
+ffffffc08102e000: f9400809     	ldr	x9, [x0, #0x10]
+ffffffc08102e004: b40000a9     	cbz	x9, 0xffffffc08102e018 <rb_replace_node+0x28>
+ffffffc08102e008: f940012a     	ldr	x10, [x9]
+ffffffc08102e00c: 9240014a     	and	x10, x10, #0x1
+ffffffc08102e010: 8b01014a     	add	x10, x10, x1
+ffffffc08102e014: f900012a     	str	x10, [x9]
+ffffffc08102e018: f9400409     	ldr	x9, [x0, #0x8]
+ffffffc08102e01c: b40000a9     	cbz	x9, 0xffffffc08102e030 <rb_replace_node+0x40>
+ffffffc08102e020: f940012a     	ldr	x10, [x9]
+ffffffc08102e024: 9240014a     	and	x10, x10, #0x1
+ffffffc08102e028: 8b01014a     	add	x10, x10, x1
+ffffffc08102e02c: f900012a     	str	x10, [x9]
+ffffffc08102e030: f27ef508     	ands	x8, x8, #0xfffffffffffffffc
+ffffffc08102e034: 540000a0     	b.eq	0xffffffc08102e048 <rb_replace_node+0x58>
+ffffffc08102e038: f8410d09     	ldr	x9, [x8, #0x10]!
+ffffffc08102e03c: d100210a     	sub	x10, x8, #0x8

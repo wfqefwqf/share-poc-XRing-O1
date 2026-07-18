@@ -1,0 +1,44 @@
+
+D:/CVE-2026-43499/vmlinux_extracted:	file format elf64-littleaarch64
+
+Disassembly of section .kernel:
+
+ffffffc081052058 <rt_mutex_start_proxy_lock>:
+ffffffc081052058: d503233f     	paciasp
+ffffffc08105205c: a9bd7bfd     	stp	x29, x30, [sp, #-0x30]!
+ffffffc081052060: f9000bf5     	str	x21, [sp, #0x10]
+ffffffc081052064: a9024ff4     	stp	x20, x19, [sp, #0x20]
+ffffffc081052068: 910003fd     	mov	x29, sp
+ffffffc08105206c: aa0203f5     	mov	x21, x2
+ffffffc081052070: aa0103f4     	mov	x20, x1
+ffffffc081052074: aa0003f3     	mov	x19, x0
+ffffffc081052078: 94000957     	bl	0xffffffc0810545d4 <_raw_spin_lock_irq>
+ffffffc08105207c: aa1303e0     	mov	x0, x19
+ffffffc081052080: aa1503e1     	mov	x1, x21
+ffffffc081052084: aa1f03e2     	mov	x2, xzr
+ffffffc081052088: 97fffde6     	bl	0xffffffc081051820 <try_to_take_rt_mutex>
+ffffffc08105208c: 340001a0     	cbz	w0, 0xffffffc0810520c0 <rt_mutex_start_proxy_lock+0x68>
+ffffffc081052090: 52800035     	mov	w21, #0x1       // =1
+ffffffc081052094: aa1303e0     	mov	x0, x19
+ffffffc081052098: aa1403e1     	mov	x1, x20
+ffffffc08105209c: 94000015     	bl	0xffffffc0810520f0 <remove_waiter>
+ffffffc0810520a0: aa1303e0     	mov	x0, x19
+ffffffc0810520a4: 940009a8     	bl	0xffffffc081054744 <_raw_spin_unlock_irq>
+ffffffc0810520a8: 2a1503e0     	mov	w0, w21
+ffffffc0810520ac: a9424ff4     	ldp	x20, x19, [sp, #0x20]
+ffffffc0810520b0: f9400bf5     	ldr	x21, [sp, #0x10]
+ffffffc0810520b4: a8c37bfd     	ldp	x29, x30, [sp], #0x30
+ffffffc0810520b8: d50323bf     	autiasp
+ffffffc0810520bc: d65f03c0     	ret
+ffffffc0810520c0: aa1303e0     	mov	x0, x19
+ffffffc0810520c4: aa1403e1     	mov	x1, x20
+ffffffc0810520c8: aa1503e2     	mov	x2, x21
+ffffffc0810520cc: 52800023     	mov	w3, #0x1        // =1
+ffffffc0810520d0: 97fffece     	bl	0xffffffc081051c08 <task_blocks_on_rt_mutex>
+ffffffc0810520d4: 2a0003f5     	mov	w21, w0
+ffffffc0810520d8: 34fffe40     	cbz	w0, 0xffffffc0810520a0 <rt_mutex_start_proxy_lock+0x48>
+ffffffc0810520dc: f9400e68     	ldr	x8, [x19, #0x18]
+ffffffc0810520e0: f100091f     	cmp	x8, #0x2
+ffffffc0810520e4: 54fffd82     	b.hs	0xffffffc081052094 <rt_mutex_start_proxy_lock+0x3c>
+ffffffc0810520e8: 2a1f03f5     	mov	w21, wzr
+ffffffc0810520ec: 17ffffed     	b	0xffffffc0810520a0 <rt_mutex_start_proxy_lock+0x48>

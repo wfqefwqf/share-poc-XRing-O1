@@ -1,0 +1,26 @@
+
+D:/CVE-2026-43499/vmlinux_extracted:	file format elf64-littleaarch64
+
+Disassembly of section .kernel:
+
+ffffffc08102df00 <rb_first>:
+ffffffc08102df00: f9400008     	ldr	x8, [x0]
+ffffffc08102df04: b40000a8     	cbz	x8, 0xffffffc08102df18 <rb_first+0x18>
+ffffffc08102df08: aa0803e0     	mov	x0, x8
+ffffffc08102df0c: f9400908     	ldr	x8, [x8, #0x10]
+ffffffc08102df10: b5ffffc8     	cbnz	x8, 0xffffffc08102df08 <rb_first+0x8>
+ffffffc08102df14: d65f03c0     	ret
+ffffffc08102df18: aa1f03e0     	mov	x0, xzr
+ffffffc08102df1c: d65f03c0     	ret
+ffffffc08102df20: 39ebf00b     	ldrsb	w11, [x0, #0xafc]
+
+ffffffc08102df24 <rb_last>:
+ffffffc08102df24: f9400008     	ldr	x8, [x0]
+ffffffc08102df28: b40000a8     	cbz	x8, 0xffffffc08102df3c <rb_last+0x18>
+ffffffc08102df2c: aa0803e0     	mov	x0, x8
+ffffffc08102df30: f9400508     	ldr	x8, [x8, #0x8]
+ffffffc08102df34: b5ffffc8     	cbnz	x8, 0xffffffc08102df2c <rb_last+0x8>
+ffffffc08102df38: d65f03c0     	ret
+ffffffc08102df3c: aa1f03e0     	mov	x0, xzr
+ffffffc08102df40: d65f03c0     	ret
+ffffffc08102df44: b6ac7eb7     	tbz	x23, #0x35, 0xffffffc081026f18 <mas_spanning_rebalance+0x744>

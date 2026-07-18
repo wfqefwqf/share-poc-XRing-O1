@@ -1,0 +1,197 @@
+
+D:/CVE-2026-43499/vmlinux_extracted:	file format elf64-littleaarch64
+
+Disassembly of section .kernel:
+
+ffffffc08102da44 <rb_erase>:
+ffffffc08102da44: a940a808     	ldp	x8, x10, [x0, #0x8]
+ffffffc08102da48: b400026a     	cbz	x10, 0xffffffc08102da94 <rb_erase+0x50>
+ffffffc08102da4c: b40003e8     	cbz	x8, 0xffffffc08102dac8 <rb_erase+0x84>
+ffffffc08102da50: f940090b     	ldr	x11, [x8, #0x10]
+ffffffc08102da54: b40004eb     	cbz	x11, 0xffffffc08102daf0 <rb_erase+0xac>
+ffffffc08102da58: aa0803e9     	mov	x9, x8
+ffffffc08102da5c: aa0903ec     	mov	x12, x9
+ffffffc08102da60: aa0b03e9     	mov	x9, x11
+ffffffc08102da64: f940096b     	ldr	x11, [x11, #0x10]
+ffffffc08102da68: b5ffffab     	cbnz	x11, 0xffffffc08102da5c <rb_erase+0x18>
+ffffffc08102da6c: f940052b     	ldr	x11, [x9, #0x8]
+ffffffc08102da70: f900098b     	str	x11, [x12, #0x10]
+ffffffc08102da74: f9000528     	str	x8, [x9, #0x8]
+ffffffc08102da78: f940010a     	ldr	x10, [x8]
+ffffffc08102da7c: 9240014a     	and	x10, x10, #0x1
+ffffffc08102da80: 8b09014a     	add	x10, x10, x9
+ffffffc08102da84: f900010a     	str	x10, [x8]
+ffffffc08102da88: aa0c03e8     	mov	x8, x12
+ffffffc08102da8c: f940080a     	ldr	x10, [x0, #0x10]
+ffffffc08102da90: 1400001a     	b	0xffffffc08102daf8 <rb_erase+0xb4>
+ffffffc08102da94: f9400009     	ldr	x9, [x0]
+ffffffc08102da98: aa0103eb     	mov	x11, x1
+ffffffc08102da9c: f27ef52a     	ands	x10, x9, #0xfffffffffffffffc
+ffffffc08102daa0: 540000c0     	b.eq	0xffffffc08102dab8 <rb_erase+0x74>
+ffffffc08102daa4: aa0a03eb     	mov	x11, x10
+ffffffc08102daa8: f8410d6c     	ldr	x12, [x11, #0x10]!
+ffffffc08102daac: d100216d     	sub	x13, x11, #0x8
+ffffffc08102dab0: eb00019f     	cmp	x12, x0
+ffffffc08102dab4: 9a8d016b     	csel	x11, x11, x13, eq
+ffffffc08102dab8: f9000168     	str	x8, [x11]
+ffffffc08102dabc: b4000d68     	cbz	x8, 0xffffffc08102dc68 <rb_erase+0x224>
+ffffffc08102dac0: f9000109     	str	x9, [x8]
+ffffffc08102dac4: d65f03c0     	ret
+ffffffc08102dac8: f9400009     	ldr	x9, [x0]
+ffffffc08102dacc: f27ef528     	ands	x8, x9, #0xfffffffffffffffc
+ffffffc08102dad0: f9000149     	str	x9, [x10]
+ffffffc08102dad4: 540010e0     	b.eq	0xffffffc08102dcf0 <rb_erase+0x2ac>
+ffffffc08102dad8: f8410d09     	ldr	x9, [x8, #0x10]!
+ffffffc08102dadc: d100210b     	sub	x11, x8, #0x8
+ffffffc08102dae0: eb00013f     	cmp	x9, x0
+ffffffc08102dae4: 9a8b0101     	csel	x1, x8, x11, eq
+ffffffc08102dae8: f900002a     	str	x10, [x1]
+ffffffc08102daec: d65f03c0     	ret
+ffffffc08102daf0: f940050b     	ldr	x11, [x8, #0x8]
+ffffffc08102daf4: aa0803e9     	mov	x9, x8
+ffffffc08102daf8: f900092a     	str	x10, [x9, #0x10]
+ffffffc08102dafc: aa0103ed     	mov	x13, x1
+ffffffc08102db00: f940014c     	ldr	x12, [x10]
+ffffffc08102db04: 9240018c     	and	x12, x12, #0x1
+ffffffc08102db08: 8b09018c     	add	x12, x12, x9
+ffffffc08102db0c: f900014c     	str	x12, [x10]
+ffffffc08102db10: f940000c     	ldr	x12, [x0]
+ffffffc08102db14: f27ef58a     	ands	x10, x12, #0xfffffffffffffffc
+ffffffc08102db18: 540000a0     	b.eq	0xffffffc08102db2c <rb_erase+0xe8>
+ffffffc08102db1c: f8410d4d     	ldr	x13, [x10, #0x10]!
+ffffffc08102db20: d100214e     	sub	x14, x10, #0x8
+ffffffc08102db24: eb0001bf     	cmp	x13, x0
+ffffffc08102db28: 9a8e014d     	csel	x13, x10, x14, eq
+ffffffc08102db2c: f90001a9     	str	x9, [x13]
+ffffffc08102db30: b40000ab     	cbz	x11, 0xffffffc08102db44 <rb_erase+0x100>
+ffffffc08102db34: 91000508     	add	x8, x8, #0x1
+ffffffc08102db38: aa1f03ea     	mov	x10, xzr
+ffffffc08102db3c: f9000168     	str	x8, [x11]
+ffffffc08102db40: 14000004     	b	0xffffffc08102db50 <rb_erase+0x10c>
+ffffffc08102db44: 3940012a     	ldrb	w10, [x9]
+ffffffc08102db48: 7200015f     	tst	w10, #0x1
+ffffffc08102db4c: 9a8803ea     	csel	x10, xzr, x8, eq
+ffffffc08102db50: f900012c     	str	x12, [x9]
+ffffffc08102db54: b400088a     	cbz	x10, 0xffffffc08102dc64 <rb_erase+0x220>
+ffffffc08102db58: aa1f03e8     	mov	x8, xzr
+ffffffc08102db5c: f9400549     	ldr	x9, [x10, #0x8]
+ffffffc08102db60: aa0803eb     	mov	x11, x8
+ffffffc08102db64: aa0a03e8     	mov	x8, x10
+ffffffc08102db68: eb09017f     	cmp	x11, x9
+ffffffc08102db6c: 540003a0     	b.eq	0xffffffc08102dbe0 <rb_erase+0x19c>
+ffffffc08102db70: 3940012a     	ldrb	w10, [x9]
+ffffffc08102db74: 3700024a     	tbnz	w10, #0x0, 0xffffffc08102dbbc <rb_erase+0x178>
+ffffffc08102db78: f940092a     	ldr	x10, [x9, #0x10]
+ffffffc08102db7c: 9100050b     	add	x11, x8, #0x1
+ffffffc08102db80: f900050a     	str	x10, [x8, #0x8]
+ffffffc08102db84: f9000928     	str	x8, [x9, #0x10]
+ffffffc08102db88: f900014b     	str	x11, [x10]
+ffffffc08102db8c: f940010c     	ldr	x12, [x8]
+ffffffc08102db90: f27ef58b     	ands	x11, x12, #0xfffffffffffffffc
+ffffffc08102db94: f900012c     	str	x12, [x9]
+ffffffc08102db98: aa0103ec     	mov	x12, x1
+ffffffc08102db9c: f9000109     	str	x9, [x8]
+ffffffc08102dba0: 540000a0     	b.eq	0xffffffc08102dbb4 <rb_erase+0x170>
+ffffffc08102dba4: f8410d6c     	ldr	x12, [x11, #0x10]!
+ffffffc08102dba8: d100216d     	sub	x13, x11, #0x8
+ffffffc08102dbac: eb08019f     	cmp	x12, x8
+ffffffc08102dbb0: 9a8d016c     	csel	x12, x11, x13, eq
+ffffffc08102dbb4: f9000189     	str	x9, [x12]
+ffffffc08102dbb8: aa0a03e9     	mov	x9, x10
+ffffffc08102dbbc: f940052b     	ldr	x11, [x9, #0x8]
+ffffffc08102dbc0: b400006b     	cbz	x11, 0xffffffc08102dbcc <rb_erase+0x188>
+ffffffc08102dbc4: 3940016a     	ldrb	w10, [x11]
+ffffffc08102dbc8: 360005aa     	tbz	w10, #0x0, 0xffffffc08102dc7c <rb_erase+0x238>
+ffffffc08102dbcc: f940092a     	ldr	x10, [x9, #0x10]
+ffffffc08102dbd0: b400040a     	cbz	x10, 0xffffffc08102dc50 <rb_erase+0x20c>
+ffffffc08102dbd4: 3940014b     	ldrb	w11, [x10]
+ffffffc08102dbd8: 370003cb     	tbnz	w11, #0x0, 0xffffffc08102dc50 <rb_erase+0x20c>
+ffffffc08102dbdc: 1400002b     	b	0xffffffc08102dc88 <rb_erase+0x244>
+ffffffc08102dbe0: f9400909     	ldr	x9, [x8, #0x10]
+ffffffc08102dbe4: 3940012a     	ldrb	w10, [x9]
+ffffffc08102dbe8: 3700024a     	tbnz	w10, #0x0, 0xffffffc08102dc30 <rb_erase+0x1ec>
+ffffffc08102dbec: f940052a     	ldr	x10, [x9, #0x8]
+ffffffc08102dbf0: 9100050b     	add	x11, x8, #0x1
+ffffffc08102dbf4: f900090a     	str	x10, [x8, #0x10]
+ffffffc08102dbf8: f9000528     	str	x8, [x9, #0x8]
+ffffffc08102dbfc: f900014b     	str	x11, [x10]
+ffffffc08102dc00: f940010c     	ldr	x12, [x8]
+ffffffc08102dc04: f27ef58b     	ands	x11, x12, #0xfffffffffffffffc
+ffffffc08102dc08: f900012c     	str	x12, [x9]
+ffffffc08102dc0c: aa0103ec     	mov	x12, x1
+ffffffc08102dc10: f9000109     	str	x9, [x8]
+ffffffc08102dc14: 540000a0     	b.eq	0xffffffc08102dc28 <rb_erase+0x1e4>
+ffffffc08102dc18: f8410d6c     	ldr	x12, [x11, #0x10]!
+ffffffc08102dc1c: d100216d     	sub	x13, x11, #0x8
+ffffffc08102dc20: eb08019f     	cmp	x12, x8
+ffffffc08102dc24: 9a8d016c     	csel	x12, x11, x13, eq
+ffffffc08102dc28: f9000189     	str	x9, [x12]
+ffffffc08102dc2c: aa0a03e9     	mov	x9, x10
+ffffffc08102dc30: f940092b     	ldr	x11, [x9, #0x10]
+ffffffc08102dc34: b400006b     	cbz	x11, 0xffffffc08102dc40 <rb_erase+0x1fc>
+ffffffc08102dc38: 3940016a     	ldrb	w10, [x11]
+ffffffc08102dc3c: 360005ea     	tbz	w10, #0x0, 0xffffffc08102dcf8 <rb_erase+0x2b4>
+ffffffc08102dc40: f940052a     	ldr	x10, [x9, #0x8]
+ffffffc08102dc44: b400006a     	cbz	x10, 0xffffffc08102dc50 <rb_erase+0x20c>
+ffffffc08102dc48: 3940014b     	ldrb	w11, [x10]
+ffffffc08102dc4c: 360005cb     	tbz	w11, #0x0, 0xffffffc08102dd04 <rb_erase+0x2c0>
+ffffffc08102dc50: f9000128     	str	x8, [x9]
+ffffffc08102dc54: f9400109     	ldr	x9, [x8]
+ffffffc08102dc58: 360000c9     	tbz	w9, #0x0, 0xffffffc08102dc70 <rb_erase+0x22c>
+ffffffc08102dc5c: f27ef52a     	ands	x10, x9, #0xfffffffffffffffc
+ffffffc08102dc60: 54fff7e1     	b.ne	0xffffffc08102db5c <rb_erase+0x118>
+ffffffc08102dc64: d65f03c0     	ret
+ffffffc08102dc68: 3707f769     	tbnz	w9, #0x0, 0xffffffc08102db54 <rb_erase+0x110>
+ffffffc08102dc6c: 17fffffe     	b	0xffffffc08102dc64 <rb_erase+0x220>
+ffffffc08102dc70: 91000529     	add	x9, x9, #0x1
+ffffffc08102dc74: f9000109     	str	x9, [x8]
+ffffffc08102dc78: d65f03c0     	ret
+ffffffc08102dc7c: aa0903ea     	mov	x10, x9
+ffffffc08102dc80: aa0b03e9     	mov	x9, x11
+ffffffc08102dc84: 14000008     	b	0xffffffc08102dca4 <rb_erase+0x260>
+ffffffc08102dc88: f940054b     	ldr	x11, [x10, #0x8]
+ffffffc08102dc8c: f900092b     	str	x11, [x9, #0x10]
+ffffffc08102dc90: f9000549     	str	x9, [x10, #0x8]
+ffffffc08102dc94: f900050a     	str	x10, [x8, #0x8]
+ffffffc08102dc98: b400006b     	cbz	x11, 0xffffffc08102dca4 <rb_erase+0x260>
+ffffffc08102dc9c: 9100052c     	add	x12, x9, #0x1
+ffffffc08102dca0: f900016c     	str	x12, [x11]
+ffffffc08102dca4: f940094c     	ldr	x12, [x10, #0x10]
+ffffffc08102dca8: 9100054b     	add	x11, x10, #0x1
+ffffffc08102dcac: f900050c     	str	x12, [x8, #0x8]
+ffffffc08102dcb0: f9000948     	str	x8, [x10, #0x10]
+ffffffc08102dcb4: f900012b     	str	x11, [x9]
+ffffffc08102dcb8: b40000ac     	cbz	x12, 0xffffffc08102dccc <rb_erase+0x288>
+ffffffc08102dcbc: f9400189     	ldr	x9, [x12]
+ffffffc08102dcc0: 92400129     	and	x9, x9, #0x1
+ffffffc08102dcc4: 8b080129     	add	x9, x9, x8
+ffffffc08102dcc8: f9000189     	str	x9, [x12]
+ffffffc08102dccc: f940010c     	ldr	x12, [x8]
+ffffffc08102dcd0: f27ef589     	ands	x9, x12, #0xfffffffffffffffc
+ffffffc08102dcd4: f900014c     	str	x12, [x10]
+ffffffc08102dcd8: f900010b     	str	x11, [x8]
+ffffffc08102dcdc: 540000a0     	b.eq	0xffffffc08102dcf0 <rb_erase+0x2ac>
+ffffffc08102dce0: f8410d2b     	ldr	x11, [x9, #0x10]!
+ffffffc08102dce4: d100212c     	sub	x12, x9, #0x8
+ffffffc08102dce8: eb08017f     	cmp	x11, x8
+ffffffc08102dcec: 9a8c0121     	csel	x1, x9, x12, eq
+ffffffc08102dcf0: f900002a     	str	x10, [x1]
+ffffffc08102dcf4: d65f03c0     	ret
+ffffffc08102dcf8: aa0903ea     	mov	x10, x9
+ffffffc08102dcfc: aa0b03e9     	mov	x9, x11
+ffffffc08102dd00: 14000008     	b	0xffffffc08102dd20 <rb_erase+0x2dc>
+ffffffc08102dd04: f940094b     	ldr	x11, [x10, #0x10]
+ffffffc08102dd08: f900052b     	str	x11, [x9, #0x8]
+ffffffc08102dd0c: f9000949     	str	x9, [x10, #0x10]
+ffffffc08102dd10: f900090a     	str	x10, [x8, #0x10]
+ffffffc08102dd14: b400006b     	cbz	x11, 0xffffffc08102dd20 <rb_erase+0x2dc>
+ffffffc08102dd18: 9100052c     	add	x12, x9, #0x1
+ffffffc08102dd1c: f900016c     	str	x12, [x11]
+ffffffc08102dd20: f940054c     	ldr	x12, [x10, #0x8]
+ffffffc08102dd24: 9100054b     	add	x11, x10, #0x1
+ffffffc08102dd28: f900090c     	str	x12, [x8, #0x10]
+ffffffc08102dd2c: f9000548     	str	x8, [x10, #0x8]
+ffffffc08102dd30: f900012b     	str	x11, [x9]
+ffffffc08102dd34: b5fffc4c     	cbnz	x12, 0xffffffc08102dcbc <rb_erase+0x278>
+ffffffc08102dd38: 17ffffe5     	b	0xffffffc08102dccc <rb_erase+0x288>
+ffffffc08102dd3c: 3b10004c     	<unknown>

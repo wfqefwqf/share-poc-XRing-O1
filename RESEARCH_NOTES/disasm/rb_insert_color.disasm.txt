@@ -1,0 +1,80 @@
+
+D:/CVE-2026-43499/vmlinux_extracted:	file format elf64-littleaarch64
+
+Disassembly of section .kernel:
+
+ffffffc08102d91c <rb_insert_color>:
+ffffffc08102d91c: f9400009     	ldr	x9, [x0]
+ffffffc08102d920: b50001a9     	cbnz	x9, 0xffffffc08102d954 <rb_insert_color+0x38>
+ffffffc08102d924: aa0003e8     	mov	x8, x0
+ffffffc08102d928: 52800029     	mov	w9, #0x1        // =1
+ffffffc08102d92c: f9000109     	str	x9, [x8]
+ffffffc08102d930: d65f03c0     	ret
+ffffffc08102d934: 9100050b     	add	x11, x8, #0x1
+ffffffc08102d938: aa0803e0     	mov	x0, x8
+ffffffc08102d93c: f900014b     	str	x11, [x10]
+ffffffc08102d940: f900012b     	str	x11, [x9]
+ffffffc08102d944: f9400109     	ldr	x9, [x8]
+ffffffc08102d948: f27ef529     	ands	x9, x9, #0xfffffffffffffffc
+ffffffc08102d94c: f9000109     	str	x9, [x8]
+ffffffc08102d950: 54fffec0     	b.eq	0xffffffc08102d928 <rb_insert_color+0xc>
+ffffffc08102d954: f9400128     	ldr	x8, [x9]
+ffffffc08102d958: 370005a8     	tbnz	w8, #0x0, 0xffffffc08102da0c <rb_insert_color+0xf0>
+ffffffc08102d95c: f940050a     	ldr	x10, [x8, #0x8]
+ffffffc08102d960: eb09015f     	cmp	x10, x9
+ffffffc08102d964: 540000a0     	b.eq	0xffffffc08102d978 <rb_insert_color+0x5c>
+ffffffc08102d968: b40001aa     	cbz	x10, 0xffffffc08102d99c <rb_insert_color+0x80>
+ffffffc08102d96c: 3940014b     	ldrb	w11, [x10]
+ffffffc08102d970: 3607fe2b     	tbz	w11, #0x0, 0xffffffc08102d934 <rb_insert_color+0x18>
+ffffffc08102d974: 1400000a     	b	0xffffffc08102d99c <rb_insert_color+0x80>
+ffffffc08102d978: f940090a     	ldr	x10, [x8, #0x10]
+ffffffc08102d97c: b400006a     	cbz	x10, 0xffffffc08102d988 <rb_insert_color+0x6c>
+ffffffc08102d980: 3940014b     	ldrb	w11, [x10]
+ffffffc08102d984: 3607fd8b     	tbz	w11, #0x0, 0xffffffc08102d934 <rb_insert_color+0x18>
+ffffffc08102d988: f940092a     	ldr	x10, [x9, #0x10]
+ffffffc08102d98c: eb0a001f     	cmp	x0, x10
+ffffffc08102d990: 54000400     	b.eq	0xffffffc08102da10 <rb_insert_color+0xf4>
+ffffffc08102d994: aa0903e0     	mov	x0, x9
+ffffffc08102d998: 14000026     	b	0xffffffc08102da30 <rb_insert_color+0x114>
+ffffffc08102d99c: f940052a     	ldr	x10, [x9, #0x8]
+ffffffc08102d9a0: eb0a001f     	cmp	x0, x10
+ffffffc08102d9a4: 54000060     	b.eq	0xffffffc08102d9b0 <rb_insert_color+0x94>
+ffffffc08102d9a8: aa0903e0     	mov	x0, x9
+ffffffc08102d9ac: 14000009     	b	0xffffffc08102d9d0 <rb_insert_color+0xb4>
+ffffffc08102d9b0: f940080a     	ldr	x10, [x0, #0x10]
+ffffffc08102d9b4: f900052a     	str	x10, [x9, #0x8]
+ffffffc08102d9b8: f9000809     	str	x9, [x0, #0x10]
+ffffffc08102d9bc: b400006a     	cbz	x10, 0xffffffc08102d9c8 <rb_insert_color+0xac>
+ffffffc08102d9c0: 9100052b     	add	x11, x9, #0x1
+ffffffc08102d9c4: f900014b     	str	x11, [x10]
+ffffffc08102d9c8: f9000120     	str	x0, [x9]
+ffffffc08102d9cc: f940040a     	ldr	x10, [x0, #0x8]
+ffffffc08102d9d0: f900090a     	str	x10, [x8, #0x10]
+ffffffc08102d9d4: f9000408     	str	x8, [x0, #0x8]
+ffffffc08102d9d8: b400006a     	cbz	x10, 0xffffffc08102d9e4 <rb_insert_color+0xc8>
+ffffffc08102d9dc: 91000509     	add	x9, x8, #0x1
+ffffffc08102d9e0: f9000149     	str	x9, [x10]
+ffffffc08102d9e4: f940010a     	ldr	x10, [x8]
+ffffffc08102d9e8: f27ef549     	ands	x9, x10, #0xfffffffffffffffc
+ffffffc08102d9ec: f900000a     	str	x10, [x0]
+ffffffc08102d9f0: f9000100     	str	x0, [x8]
+ffffffc08102d9f4: 540000a0     	b.eq	0xffffffc08102da08 <rb_insert_color+0xec>
+ffffffc08102d9f8: f8410d2a     	ldr	x10, [x9, #0x10]!
+ffffffc08102d9fc: d100212b     	sub	x11, x9, #0x8
+ffffffc08102da00: eb08015f     	cmp	x10, x8
+ffffffc08102da04: 9a8b0121     	csel	x1, x9, x11, eq
+ffffffc08102da08: f9000020     	str	x0, [x1]
+ffffffc08102da0c: d65f03c0     	ret
+ffffffc08102da10: f940040a     	ldr	x10, [x0, #0x8]
+ffffffc08102da14: f900092a     	str	x10, [x9, #0x10]
+ffffffc08102da18: f9000409     	str	x9, [x0, #0x8]
+ffffffc08102da1c: b400006a     	cbz	x10, 0xffffffc08102da28 <rb_insert_color+0x10c>
+ffffffc08102da20: 9100052b     	add	x11, x9, #0x1
+ffffffc08102da24: f900014b     	str	x11, [x10]
+ffffffc08102da28: f9000120     	str	x0, [x9]
+ffffffc08102da2c: f940080a     	ldr	x10, [x0, #0x10]
+ffffffc08102da30: f900050a     	str	x10, [x8, #0x8]
+ffffffc08102da34: f9000808     	str	x8, [x0, #0x10]
+ffffffc08102da38: b5fffd2a     	cbnz	x10, 0xffffffc08102d9dc <rb_insert_color+0xc0>
+ffffffc08102da3c: 17ffffea     	b	0xffffffc08102d9e4 <rb_insert_color+0xc8>
+ffffffc08102da40: bacf0d33     	<unknown>

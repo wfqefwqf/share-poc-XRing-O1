@@ -1,0 +1,27 @@
+
+D:/CVE-2026-43499/vmlinux_extracted:	file format elf64-littleaarch64
+
+Disassembly of section .kernel:
+
+ffffffc08102df48 <rb_next>:
+ffffffc08102df48: f9400009     	ldr	x9, [x0]
+ffffffc08102df4c: eb00013f     	cmp	x9, x0
+ffffffc08102df50: 54000061     	b.ne	0xffffffc08102df5c <rb_next+0x14>
+ffffffc08102df54: aa1f03e0     	mov	x0, xzr
+ffffffc08102df58: d65f03c0     	ret
+ffffffc08102df5c: f9400409     	ldr	x9, [x0, #0x8]
+ffffffc08102df60: aa0003e8     	mov	x8, x0
+ffffffc08102df64: b4000129     	cbz	x9, 0xffffffc08102df88 <rb_next+0x40>
+ffffffc08102df68: aa0903e0     	mov	x0, x9
+ffffffc08102df6c: f9400929     	ldr	x9, [x9, #0x10]
+ffffffc08102df70: b5ffffc9     	cbnz	x9, 0xffffffc08102df68 <rb_next+0x20>
+ffffffc08102df74: d65f03c0     	ret
+ffffffc08102df78: f9400409     	ldr	x9, [x0, #0x8]
+ffffffc08102df7c: eb09011f     	cmp	x8, x9
+ffffffc08102df80: aa0003e8     	mov	x8, x0
+ffffffc08102df84: 54ffff81     	b.ne	0xffffffc08102df74 <rb_next+0x2c>
+ffffffc08102df88: f9400109     	ldr	x9, [x8]
+ffffffc08102df8c: f27ef520     	ands	x0, x9, #0xfffffffffffffffc
+ffffffc08102df90: 54ffff41     	b.ne	0xffffffc08102df78 <rb_next+0x30>
+ffffffc08102df94: 17fffff8     	b	0xffffffc08102df74 <rb_next+0x2c>
+ffffffc08102df98: b6ac7eb7     	tbz	x23, #0x35, 0xffffffc081026f6c <mas_spanning_rebalance+0x798>
