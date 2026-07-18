@@ -1,3 +1,10 @@
+<p align="center">
+  <b>Language:</b>
+  &nbsp;<a href="README.md"><b>🇨🇳 中文</b></a> &nbsp;|&nbsp; 🇬🇧 English (current)
+</p>
+
+---
+
 # CVE-2026-43499 (GhostLock) — XRing O1 Exploit Research
 
 > Target: Xiaomi Pad 7 Ultra (jinghu) / Xiaomi 15S Pro (dijun), XRing O1 SoC
