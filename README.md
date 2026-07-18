@@ -78,29 +78,39 @@ walk#2: *(task->cred)      = &fake_w0.pi_tree_entry
 
 kernelsnitch 泄露的是 mm_struct 地址。要写 task->cred 需要知道 task_struct 地址, 这需要读 mm_struct + 0x408 (mm->owner)。
 
-但所有已知内核读路径都不可用:
-- configfs_read_once 有 bug (见踩坑)
-- /dev/ashmem 被 SELinux 拦截 (Permission denied)
+**所有已知内核读路径都不可用, 根因是 ashmem SELinux 墙 (详见下方团队对比)**:
+- configfs_read_once **代码本身已正确** (与团队版本逐字相同, 设 CFG_PAGE_OFF + pos 读), 但它需要一个 **ashmem fd** 来承载 target 地址
+- `/dev/ashmem` 权限 666 但 SELinux 拦截 shell 域 open (Permission denied) → configfs 读 / pipe physrw 全部饿死
 - /proc/self/stat 的 kstkesp=0 (kptr_restrict)
-- BPF/debugfs 不可读
+- BPF/debugfs 不可读, perf_event 被 SELinux 拒 (`{ kernel }` tclass=perf_event)
 
-可用资源: /dev/uhid (crw-rw-rw-, 所有人可读写) — 待研究
+可用资源: **/dev/uhid (crw-rw-rw-, shell 域可 open, 已验证 fd=3)** — 见下方 "团队对比 + uhid 突破方向"。
 
-### 3. ashmem SELinux 拦截
+### 3. ashmem SELinux 拦截 (真实 blocker)
 
-`/dev/ashmem` 权限 666 但 SELinux 拦截 shell 域 open。阻止了 fops 路线的 configfs 验证。
+`/dev/ashmem` 权限 666 但 SELinux 拦截 shell 域 open。不仅阻止 fops 路线的 configfs 验证, 更致命的是: **团队的整个后段 (pipe physrw 任意 RW + install_android_root 提权) 也建立在 configfs_read_once 之上**, 同样被这堵墙饿死。
 
-cred 直写不需要 ashmem 验证, 但读取 mm->owner 需要。
+cred 直写同样需要读 mm->owner → 同样被这堵墙挡住。
+
+### ★ 团队对比 (ayyy7128/CVE-2026-43499-jinghu) + uhid 突破方向
+
+已克隆并逐文件分析团队报告 (详见 `docs/team-compare.md`), 关键结论:
+
+1. **双方内核同一构建, 偏移完全对齐** (init_task/init_cred/selinux/ashmem_misc_fops 一致), KASLR=0。
+2. **双方卡在完全相同的位置**: configfs_read_once 代码已一致且正确, 但 ashmem fd 在 shell 域被 SELinux 拒 → configfs 读返回 0。团队 PROGRESS.md 自认 "configfs 读仍 rd=0"。
+3. **团队的 /dev/mem fallback 在 Android 不可行** (CONFIG_STRICT_DEVMEM)。
+4. **突破方向 — uhid fops 重定向**: `/dev/uhid` 是 `crw-rw-rw-` 且 shell 域**可 open** (我们 uhid_test.c 已验证 fd=3), 而 /dev/ashmem 不行。KASLR=0 → `uhid_fops` 地址已知 → GhostLock 写入原语可把 `uhid_fops` 指向 spray 页面 fake fops, 然后 open("/dev/uhid") 触发劫持 → 任意内核 RW, 从而绕过 ashmem缺少的读原语。
+   - caveat: 团队的 configfs 任意读依赖 ashmem 专属 name blob 机制, uhid 没有, 需为 uhid fd 另找 `.read`/`.unlocked_ioctl` 的任意 RW gadget。这是**最有价值的未验证假设**, 待设备重连实验。
 
 ## 踩的坑
 
-### 坑 1: configfs_read_once 失效不是 Android 16 修补
+### 坑 1: configfs_read_once 失效根因 = ashmem SELinux 墙 (非代码 bug, 非 Android 16 修补)
 
-反汇编 configfs_bin_read_iter (0xffffffc080488c9c) 确认:
-- CFG_* 偏移正确 (0x50/0x58/0x60/0x64 完全匹配)
-- 失效原因是代码 bug: 设 needs_read_fill=0 + 不设 buffer_size → 返回 0
-- 这个 bug 在 Pixel 上也存在, configfs_read_once 可能从未成功过
-- 早期文档 "Android 16 已修补 configfs" 是误判
+反汇编 configfs_bin_read_iter (0xffffffc080488c9c) 确认 CFG_* 偏移正确 (0x50/0x58/0x60/0x64 完全匹配)。
+**但 configfs_read_once 代码本身是正确可用的** (与团队版本逐字相同, 设 CFG_PAGE_OFF + pos 读) — 早期 "代码 bug (needs_read_fill=0 不设 buffer_size)" 是对更老版本的误判, 当前代码已修正。
+
+真机返回 0 的**真正原因**: configfs_read_once 需要 ashmem fd 承载 target (ASHMEM_SET_NAME), 而 **/dev/ashmem 在 shell 域被 SELinux 拒绝 open**。fd 打不开 → read 返回 0。
+团队 PROGRESS.md 同样自认 "configfs 读仍 rd=0"。早期文档 "Android 16 已修补 configfs" 是误判 — 是 SELinux 策略挡了 shell 域的 ashmem open。
 
 ### 坑 2: 路线偏差 (fops 劫持 vs cred 直写)
 
@@ -185,8 +195,12 @@ rt_mutex_cleanup_proxy_lock = 0xffffffc081052634
 - 在 fake_w0 页面伪造 cred 结构 (uid/gid/euid/suid/fsuid/egid/sgid/fsgid=0, cap=0)
 - 两次 walk 写 real_cred/cred 指针槽 = &fake_w0.pi_tree_entry
 
-### 优先级 2: 解决 mm->owner 读取
-找到不依赖 configfs/ashmem 的内核读方法, 读 mm_struct+0x408 拿 task_struct。候选: /dev/uhid、perf_event、eBPF。
+### 优先级 2: 解决 mm->owner 读取 (★ 当前最高优先级, 双方共同缺口)
+真实 blocker 是 ashmem SELinux 墙, 不是 configfs 代码 bug。候选突破 (按优先级):
+1. **uhid fops 重定向 bootstrap** (最有价值假设): GhostLock 写 `uhid_fops` → spray fake fops → open("/dev/uhid") (shell 可 open) → 任意 RW gadget → 读 mm->owner 拿 task_struct。需先提取 `uhid_fops` 地址 + 找 uhid 的 RW gadget。
+2. 枚举 shell 域可 open 的全部设备, 找比 uhid 更优的 fops 劫持目标 (带可控参数 syscall 的)。
+3. 重新审视 /dev/ashmem 是否可在其他域/路径 open。
+4. 次选: perf_event (被 SELinux 拒)、eBPF (通常不可)、sock_diag 侧信道。
 
 ### 优先级 3: child mm → parent task
 kernelsnitch 在 clone_leak_child 里跑, 泄露的是 child mm。要写 parent cred, 需读 child task->real_parent (+0x628) 拿 parent task_struct。或改 kernelsnitch 在 parent 跑。
@@ -204,7 +218,8 @@ share-poc-XRing-O1/
 ├── README.md              项目总览 (攻击链/进度/坑/关键数据/待办)
 ├── RESEARCH_NOTES.md      研究说明 (漏洞原理/技术路线/难点突破)
 ├── docs/
-│   └── findings.md        关键发现汇总 (configfs bug/kernelsnitch工作/PI链写入问题)
+│   ├── findings.md        关键发现汇总 (configfs bug/kernelsnitch工作/PI链写入问题)
+│   └── team-compare.md    ★ 团队报告对比 (ayyy7128) + uhid 突破方向
 ├── src/                   完整源码 (可编译)
 │   ├── test_minimal.c     分阶段测试程序 (STAGE 1-7 隔离 panic 点)
 │   ├── main_cred.c        cred 直写框架 (run_exploit 3次walk写cred)
