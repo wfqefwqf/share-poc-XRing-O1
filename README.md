@@ -76,11 +76,7 @@ cred 直写不需要 ashmem 验证, 但读取 mm->owner 需要。
 
 ## 踩的坑
 
-### 坑 1: dijun 也是 XRing O1 (不是 Qualcomm)
-
-早期误判 dijun 是 Qualcomm 平台/有 /dev/diag。实际两台都是 XRing O1 同芯片同内核。导致 jinghu 走了 fops 劫持弯路, 而 dijun 走 cred 直写。
-
-### 坑 2: configfs_read_once 失效不是 Android 16 修补
+### 坑 1: configfs_read_once 失效不是 Android 16 修补
 
 反汇编 configfs_bin_read_iter (0xffffffc080488c9c) 确认:
 - CFG_* 偏移正确 (0x50/0x58/0x60/0x64 完全匹配)
@@ -88,25 +84,25 @@ cred 直写不需要 ashmem 验证, 但读取 mm->owner 需要。
 - 这个 bug 在 Pixel 上也存在, configfs_read_once 可能从未成功过
 - 早期文档 "Android 16 已修补 configfs" 是误判
 
-### 坑 3: 路线偏差 (fops 劫持 vs cred 直写)
+### 坑 2: 路线偏差 (fops 劫持 vs cred 直写)
 
 - dijun 走 cred 直写: mm leaked → 两次 walk 写 task->cred/real_cred=init_cred
 - jinghu 走 fops 劫持: 写 ashmem_misc_fops → configfs 验证 → leak_kernel_base → install_root
 - fops 路线依赖 configfs (致命依赖), cred 直写更简洁
 
-### 坑 4: page_base=0 问题
+### 坑 3: page_base=0 问题
 
 test_minimal STAGE 6 设置了 page_base, 但 STAGE 7 do_pselect_fake_lock_route 看到的是 0。原因不明 (可能多线程可见性或编译器优化)。解决: STAGE 7 重新调 prepare_good_kernel_page。
 
-### 坑 5: pr_error 调 exit(-1)
+### 坑 4: pr_error 调 exit(-1)
 
 SYSCHK 失败时 pr_error 调 exit(-1), 导致 ashmem open 失败后进程退出, 无法看到后续结果。解决: 重定义 pr_error 不 exit, 或改 open_ashmem_device 不 SYSCHK。
 
-### 坑 6: rt_mutex_waiter 布局
+### 坑 5: rt_mutex_waiter 布局
 
 反汇编验证: pi_tree_entry 在 +0x28 (不是 +0x18), 多了 prio/deadline 字段。fake_task.pi_blocked_on 必须指向 fake_w0 结构体起始 (非 pi_tree_entry), 否则第二跳读 lock 字段错位。
 
-### 坑 7: pselect 不阻塞
+### 坑 6: pselect 不阻塞
 
 readfds 全零 + exceptfds=NULL → do_select 无 fd 检查立即返回 ret=0。修复: exceptfds 设 pipe read end, pselect 阻塞到 timeout。
 
