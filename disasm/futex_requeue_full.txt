@@ -1,0 +1,576 @@
+
+D:\CVE-2026-43499\vmlinux_extracted:	file format elf64-littleaarch64
+
+Disassembly of section .kernel:
+
+ffffffc0801a1e44 <futex_requeue>:
+ffffffc0801a1e44: d503233f     	paciasp
+ffffffc0801a1e48: d10443ff     	sub	sp, sp, #0x110
+ffffffc0801a1e4c: a90b7bfd     	stp	x29, x30, [sp, #0xb0]
+ffffffc0801a1e50: a90c6ffc     	stp	x28, x27, [sp, #0xc0]
+ffffffc0801a1e54: a90d67fa     	stp	x26, x25, [sp, #0xd0]
+ffffffc0801a1e58: a90e5ff8     	stp	x24, x23, [sp, #0xe0]
+ffffffc0801a1e5c: a90f57f6     	stp	x22, x21, [sp, #0xf0]
+ffffffc0801a1e60: a9104ff4     	stp	x20, x19, [sp, #0x100]
+ffffffc0801a1e64: 9102c3fd     	add	x29, sp, #0xb0
+ffffffc0801a1e68: f9001fe5     	str	x5, [sp, #0x38]
+ffffffc0801a1e6c: d5384108     	mrs	x8, SP_EL0
+ffffffc0801a1e70: 910123e9     	add	x9, sp, #0x48
+ffffffc0801a1e74: f9431108     	ldr	x8, [x8, #0x620]
+ffffffc0801a1e78: f81f03a8     	stur	x8, [x29, #-0x10]
+ffffffc0801a1e7c: 52800028     	mov	w8, #0x1        // =1
+ffffffc0801a1e80: a904a7e8     	stp	x8, x9, [sp, #0x48]
+ffffffc0801a1e84: 2a030088     	orr	w8, w4, w3
+ffffffc0801a1e88: a93dffbf     	stp	xzr, xzr, [x29, #-0x28]
+ffffffc0801a1e8c: a93cffbf     	stp	xzr, xzr, [x29, #-0x38]
+ffffffc0801a1e90: a93bffbf     	stp	xzr, xzr, [x29, #-0x48]
+ffffffc0801a1e94: f81b03bf     	stur	xzr, [x29, #-0x50]
+ffffffc0801a1e98: 37f82108     	tbnz	w8, #0x1f, 0xffffffc0801a22b8 <futex_requeue+0x474>
+ffffffc0801a1e9c: 2a0603fc     	mov	w28, w6
+ffffffc0801a1ea0: aa0203fb     	mov	x27, x2
+ffffffc0801a1ea4: 2a0103f6     	mov	w22, w1
+ffffffc0801a1ea8: aa0003f8     	mov	x24, x0
+ffffffc0801a1eac: f9002fff     	str	xzr, [sp, #0x58]
+ffffffc0801a1eb0: 340001c6     	cbz	w6, 0xffffffc0801a1ee8 <futex_requeue+0xa4>
+ffffffc0801a1eb4: eb1b031f     	cmp	x24, x27
+ffffffc0801a1eb8: 128002b9     	mov	w25, #-0x16     // =-22
+ffffffc0801a1ebc: 540033c0     	b.eq	0xffffffc0801a2534 <futex_requeue+0x6f0>
+ffffffc0801a1ec0: 7100047f     	cmp	w3, #0x1
+ffffffc0801a1ec4: 54003381     	b.ne	0xffffffc0801a2534 <futex_requeue+0x6f0>
+ffffffc0801a1ec8: 2a0403f4     	mov	w20, w4
+ffffffc0801a1ecc: 2a0303f5     	mov	w21, w3
+ffffffc0801a1ed0: 97fffae0     	bl	0xffffffc0801a0a50 <refill_pi_state_cache>
+ffffffc0801a1ed4: 2a1503e3     	mov	w3, w21
+ffffffc0801a1ed8: 2a1403e4     	mov	w4, w20
+ffffffc0801a1edc: 34000060     	cbz	w0, 0xffffffc0801a1ee8 <futex_requeue+0xa4>
+ffffffc0801a1ee0: 12800179     	mov	w25, #-0xc      // =-12
+ffffffc0801a1ee4: 14000194     	b	0xffffffc0801a2534 <futex_requeue+0x6f0>
+ffffffc0801a1ee8: 290413e3     	stp	w3, w4, [sp, #0x20]
+ffffffc0801a1eec: 120002c1     	and	w1, w22, #0x1
+ffffffc0801a1ef0: d100c3a2     	sub	x2, x29, #0x30
+ffffffc0801a1ef4: aa1803e0     	mov	x0, x24
+ffffffc0801a1ef8: 2a1f03e3     	mov	w3, wzr
+ffffffc0801a1efc: 97fff0b0     	bl	0xffffffc08019e1bc <get_futex_key>
+ffffffc0801a1f00: 35002e60     	cbnz	w0, 0xffffffc0801a24cc <futex_requeue+0x688>
+ffffffc0801a1f04: d378df08     	lsl	x8, x24, #8
+ffffffc0801a1f08: 7100039f     	cmp	w28, #0x0
+ffffffc0801a1f0c: 1a9f07e9     	cset	w9, ne
+ffffffc0801a1f10: 8a88230a     	and	x10, x24, x8, asr #8
+ffffffc0801a1f14: 290527f6     	stp	w22, w9, [sp, #0x28]
+ffffffc0801a1f18: d5384108     	mrs	x8, SP_EL0
+ffffffc0801a1f1c: a90123ea     	stp	x10, x8, [sp, #0x10]
+ffffffc0801a1f20: 14000011     	b	0xffffffc0801a1f64 <futex_requeue+0x120>
+ffffffc0801a1f24: 5280002a     	mov	w10, #0x1       // =1
+ffffffc0801a1f28: f98002d1     	prfm	pstl1strm, [x22]
+ffffffc0801a1f2c: 885f7ec8     	ldxr	w8, [x22]
+ffffffc0801a1f30: 4b0a0108     	sub	w8, w8, w10
+ffffffc0801a1f34: 88097ec8     	stxr	w9, w8, [x22]
+ffffffc0801a1f38: 35ffffa9     	cbnz	w9, 0xffffffc0801a1f2c <futex_requeue+0xe8>
+ffffffc0801a1f3c: f94023e1     	ldr	x1, [sp, #0x40]
+ffffffc0801a1f40: 2a1503e0     	mov	w0, w21
+ffffffc0801a1f44: 97fff2b4     	bl	0xffffffc08019ea14 <wait_for_owner_exiting>
+ffffffc0801a1f48: b9402bf6     	ldr	w22, [sp, #0x28]
+ffffffc0801a1f4c: d100c3a2     	sub	x2, x29, #0x30
+ffffffc0801a1f50: aa1803e0     	mov	x0, x24
+ffffffc0801a1f54: 2a1f03e3     	mov	w3, wzr
+ffffffc0801a1f58: 120002c1     	and	w1, w22, #0x1
+ffffffc0801a1f5c: 97fff098     	bl	0xffffffc08019e1bc <get_futex_key>
+ffffffc0801a1f60: 35002b60     	cbnz	w0, 0xffffffc0801a24cc <futex_requeue+0x688>
+ffffffc0801a1f64: b9402fe3     	ldr	w3, [sp, #0x2c]
+ffffffc0801a1f68: 120002c1     	and	w1, w22, #0x1
+ffffffc0801a1f6c: d10123a2     	sub	x2, x29, #0x48
+ffffffc0801a1f70: aa1b03e0     	mov	x0, x27
+ffffffc0801a1f74: 97fff092     	bl	0xffffffc08019e1bc <get_futex_key>
+ffffffc0801a1f78: 35002aa0     	cbnz	w0, 0xffffffc0801a24cc <futex_requeue+0x688>
+ffffffc0801a1f7c: 340001bc     	cbz	w28, 0xffffffc0801a1fb0 <futex_requeue+0x16c>
+ffffffc0801a1f80: f85d83a8     	ldur	x8, [x29, #-0x28]
+ffffffc0801a1f84: f85c03a9     	ldur	x9, [x29, #-0x40]
+ffffffc0801a1f88: eb09011f     	cmp	x8, x9
+ffffffc0801a1f8c: 54000121     	b.ne	0xffffffc0801a1fb0 <futex_requeue+0x16c>
+ffffffc0801a1f90: f85d03a8     	ldur	x8, [x29, #-0x30]
+ffffffc0801a1f94: f85b83a9     	ldur	x9, [x29, #-0x48]
+ffffffc0801a1f98: eb09011f     	cmp	x8, x9
+ffffffc0801a1f9c: 540000a1     	b.ne	0xffffffc0801a1fb0 <futex_requeue+0x16c>
+ffffffc0801a1fa0: b85e03a8     	ldur	w8, [x29, #-0x20]
+ffffffc0801a1fa4: b85c83a9     	ldur	w9, [x29, #-0x38]
+ffffffc0801a1fa8: 6b09011f     	cmp	w8, w9
+ffffffc0801a1fac: 54001860     	b.eq	0xffffffc0801a22b8 <futex_requeue+0x474>
+ffffffc0801a1fb0: d100c3a0     	sub	x0, x29, #0x30
+ffffffc0801a1fb4: 97fff02c     	bl	0xffffffc08019e064 <futex_hash>
+ffffffc0801a1fb8: aa0003f7     	mov	x23, x0
+ffffffc0801a1fbc: d10123a0     	sub	x0, x29, #0x48
+ffffffc0801a1fc0: 97fff029     	bl	0xffffffc08019e064 <futex_hash>
+ffffffc0801a1fc4: eb0002ff     	cmp	x23, x0
+ffffffc0801a1fc8: aa0003f6     	mov	x22, x0
+ffffffc0801a1fcc: 910012e8     	add	x8, x23, #0x4
+ffffffc0801a1fd0: 9a8082f3     	csel	x19, x23, x0, hi
+ffffffc0801a1fd4: 9a97801a     	csel	x26, x0, x23, hi
+ffffffc0801a1fd8: 91001019     	add	x25, x0, #0x4
+ffffffc0801a1fdc: 91001355     	add	x21, x26, #0x4
+ffffffc0801a1fe0: 91001274     	add	x20, x19, #0x4
+ffffffc0801a1fe4: f9001be8     	str	x8, [sp, #0x30]
+ffffffc0801a1fe8: 14000032     	b	0xffffffc0801a20b0 <futex_requeue+0x26c>
+ffffffc0801a1fec: 52800028     	mov	w8, #0x1        // =1
+ffffffc0801a1ff0: b82802df     	stadd	w8, [x22]
+ffffffc0801a1ff4: d5033bbf     	dmb	ish
+ffffffc0801a1ff8: aa1503e0     	mov	x0, x21
+ffffffc0801a1ffc: 943ac93b     	bl	0xffffffc0810544e8 <_raw_spin_lock>
+ffffffc0801a2000: eb13035f     	cmp	x26, x19
+ffffffc0801a2004: 54000060     	b.eq	0xffffffc0801a2010 <futex_requeue+0x1cc>
+ffffffc0801a2008: aa1403e0     	mov	x0, x20
+ffffffc0801a200c: 943ac937     	bl	0xffffffc0810544e8 <_raw_spin_lock>
+ffffffc0801a2010: f9401fe8     	ldr	x8, [sp, #0x38]
+ffffffc0801a2014: b4000728     	cbz	x8, 0xffffffc0801a20f8 <futex_requeue+0x2b4>
+ffffffc0801a2018: 910103e0     	add	x0, sp, #0x40
+ffffffc0801a201c: aa1803e1     	mov	x1, x24
+ffffffc0801a2020: b90043ff     	str	wzr, [sp, #0x40]
+ffffffc0801a2024: 97fff23f     	bl	0xffffffc08019e920 <futex_get_value_locked>
+ffffffc0801a2028: 340005e0     	cbz	w0, 0xffffffc0801a20e4 <futex_requeue+0x2a0>
+ffffffc0801a202c: f9401be0     	ldr	x0, [sp, #0x30]
+ffffffc0801a2030: 943ac9a0     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a2034: eb1602ff     	cmp	x23, x22
+ffffffc0801a2038: 54000060     	b.eq	0xffffffc0801a2044 <futex_requeue+0x200>
+ffffffc0801a203c: aa1903e0     	mov	x0, x25
+ffffffc0801a2040: 943ac99c     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a2044: 14000021     	b	0xffffffc0801a20c8 <futex_requeue+0x284>
+ffffffc0801a2048: 12800008     	mov	w8, #-0x1       // =-1
+ffffffc0801a204c: b82802df     	stadd	w8, [x22]
+ffffffc0801a2050: f9400fe8     	ldr	x8, [sp, #0x18]
+ffffffc0801a2054: 39411908     	ldrb	w8, [x8, #0x46]
+ffffffc0801a2058: 372800a8     	tbnz	w8, #0x5, 0xffffffc0801a206c <futex_requeue+0x228>
+ffffffc0801a205c: f9400fe8     	ldr	x8, [sp, #0x18]
+ffffffc0801a2060: f9400109     	ldr	x9, [x8]
+ffffffc0801a2064: aa1803e8     	mov	x8, x24
+ffffffc0801a2068: 36d00049     	tbz	w9, #0x1a, 0xffffffc0801a2070 <futex_requeue+0x22c>
+ffffffc0801a206c: f9400be8     	ldr	x8, [sp, #0x10]
+ffffffc0801a2070: b27e93e9     	mov	x9, #0x7ffffffffc // =549755813884
+ffffffc0801a2074: f90007f9     	str	x25, [sp, #0x8]
+ffffffc0801a2078: eb09011f     	cmp	x8, x9
+ffffffc0801a207c: 540028e8     	b.hi	0xffffffc0801a2598 <futex_requeue+0x754>
+ffffffc0801a2080: 9248fb08     	and	x8, x24, #0xff7fffffffffffff
+ffffffc0801a2084: f90003e8     	str	x8, [sp]
+ffffffc0801a2088: 9400014e     	bl	0xffffffc0801a25c0 <uaccess_ttbr0_enable>
+ffffffc0801a208c: 2a1f03f9     	mov	w25, wzr
+ffffffc0801a2090: f94003e8     	ldr	x8, [sp]
+ffffffc0801a2094: b8400908     	ldtr	w8, [x8]
+ffffffc0801a2098: 9400015c     	bl	0xffffffc0801a2608 <uaccess_ttbr0_disable>
+ffffffc0801a209c: 350024d9     	cbnz	w25, 0xffffffc0801a2534 <futex_requeue+0x6f0>
+ffffffc0801a20a0: f94007f9     	ldr	x25, [sp, #0x8]
+ffffffc0801a20a4: b9402be8     	ldr	w8, [sp, #0x28]
+ffffffc0801a20a8: 3607fa08     	tbz	w8, #0x0, 0xffffffc0801a1fe8 <futex_requeue+0x1a4>
+ffffffc0801a20ac: 17ffffa7     	b	0xffffffc0801a1f48 <futex_requeue+0x104>
+ffffffc0801a20b0: f98002d1     	prfm	pstl1strm, [x22]
+ffffffc0801a20b4: 885f7ec8     	ldxr	w8, [x22]
+ffffffc0801a20b8: 11000508     	add	w8, w8, #0x1
+ffffffc0801a20bc: 88097ec8     	stxr	w9, w8, [x22]
+ffffffc0801a20c0: 35ffffa9     	cbnz	w9, 0xffffffc0801a20b4 <futex_requeue+0x270>
+ffffffc0801a20c4: 17ffffcc     	b	0xffffffc0801a1ff4 <futex_requeue+0x1b0>
+ffffffc0801a20c8: 5280002a     	mov	w10, #0x1       // =1
+ffffffc0801a20cc: f98002d1     	prfm	pstl1strm, [x22]
+ffffffc0801a20d0: 885f7ec8     	ldxr	w8, [x22]
+ffffffc0801a20d4: 4b0a0108     	sub	w8, w8, w10
+ffffffc0801a20d8: 88097ec8     	stxr	w9, w8, [x22]
+ffffffc0801a20dc: 35ffffa9     	cbnz	w9, 0xffffffc0801a20d0 <futex_requeue+0x28c>
+ffffffc0801a20e0: 17ffffdc     	b	0xffffffc0801a2050 <futex_requeue+0x20c>
+ffffffc0801a20e4: f9401fe9     	ldr	x9, [sp, #0x38]
+ffffffc0801a20e8: b94043e8     	ldr	w8, [sp, #0x40]
+ffffffc0801a20ec: b9400129     	ldr	w9, [x9]
+ffffffc0801a20f0: 6b09011f     	cmp	w8, w9
+ffffffc0801a20f4: 54001e61     	b.ne	0xffffffc0801a24c0 <futex_requeue+0x67c>
+ffffffc0801a20f8: 2a1c03f3     	mov	w19, w28
+ffffffc0801a20fc: 34000e9c     	cbz	w28, 0xffffffc0801a22cc <futex_requeue+0x488>
+ffffffc0801a2100: d10053a0     	sub	x0, x29, #0x14
+ffffffc0801a2104: aa1b03e1     	mov	x1, x27
+ffffffc0801a2108: f90023ff     	str	xzr, [sp, #0x40]
+ffffffc0801a210c: b81ec3bf     	stur	wzr, [x29, #-0x14]
+ffffffc0801a2110: 97fff204     	bl	0xffffffc08019e920 <futex_get_value_locked>
+ffffffc0801a2114: 340001c0     	cbz	w0, 0xffffffc0801a214c <futex_requeue+0x308>
+ffffffc0801a2118: f9401be0     	ldr	x0, [sp, #0x30]
+ffffffc0801a211c: 943ac965     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a2120: eb1602ff     	cmp	x23, x22
+ffffffc0801a2124: 54000060     	b.eq	0xffffffc0801a2130 <futex_requeue+0x2ec>
+ffffffc0801a2128: aa1903e0     	mov	x0, x25
+ffffffc0801a212c: 943ac961     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a2130: 1400005b     	b	0xffffffc0801a229c <futex_requeue+0x458>
+ffffffc0801a2134: 12800008     	mov	w8, #-0x1       // =-1
+ffffffc0801a2138: b82802df     	stadd	w8, [x22]
+ffffffc0801a213c: aa1b03e0     	mov	x0, x27
+ffffffc0801a2140: 97fff166     	bl	0xffffffc08019e6d8 <fault_in_user_writeable>
+ffffffc0801a2144: 34fff020     	cbz	w0, 0xffffffc0801a1f48 <futex_requeue+0x104>
+ffffffc0801a2148: 140000e1     	b	0xffffffc0801a24cc <futex_requeue+0x688>
+ffffffc0801a214c: d100c3a1     	sub	x1, x29, #0x30
+ffffffc0801a2150: aa1703e0     	mov	x0, x23
+ffffffc0801a2154: 97fff18b     	bl	0xffffffc08019e780 <futex_top_waiter>
+ffffffc0801a2158: b4000ba0     	cbz	x0, 0xffffffc0801a22cc <futex_requeue+0x488>
+ffffffc0801a215c: f9402c08     	ldr	x8, [x0, #0x58]
+ffffffc0801a2160: aa0003f4     	mov	x20, x0
+ffffffc0801a2164: b4000ae8     	cbz	x8, 0xffffffc0801a22c0 <futex_requeue+0x47c>
+ffffffc0801a2168: f9402a88     	ldr	x8, [x20, #0x50]
+ffffffc0801a216c: b5000aa8     	cbnz	x8, 0xffffffc0801a22c0 <futex_requeue+0x47c>
+ffffffc0801a2170: f9403288     	ldr	x8, [x20, #0x60]
+ffffffc0801a2174: b4000a68     	cbz	x8, 0xffffffc0801a22c0 <futex_requeue+0x47c>
+ffffffc0801a2178: f9400509     	ldr	x9, [x8, #0x8]
+ffffffc0801a217c: f85c03aa     	ldur	x10, [x29, #-0x40]
+ffffffc0801a2180: eb0a013f     	cmp	x9, x10
+ffffffc0801a2184: 540009e1     	b.ne	0xffffffc0801a22c0 <futex_requeue+0x47c>
+ffffffc0801a2188: f9400109     	ldr	x9, [x8]
+ffffffc0801a218c: f85b83aa     	ldur	x10, [x29, #-0x48]
+ffffffc0801a2190: eb0a013f     	cmp	x9, x10
+ffffffc0801a2194: 54000961     	b.ne	0xffffffc0801a22c0 <futex_requeue+0x47c>
+ffffffc0801a2198: b9401108     	ldr	w8, [x8, #0x10]
+ffffffc0801a219c: b85c83a9     	ldur	w9, [x29, #-0x38]
+ffffffc0801a21a0: 6b09011f     	cmp	w8, w9
+ffffffc0801a21a4: 540008e1     	b.ne	0xffffffc0801a22c0 <futex_requeue+0x47c>
+ffffffc0801a21a8: 9101b288     	add	x8, x20, #0x6c
+ffffffc0801a21ac: 88dffd08     	ldar	w8, [x8]
+ffffffc0801a21b0: 35000288     	cbnz	w8, 0xffffffc0801a2200 <futex_requeue+0x3bc>
+ffffffc0801a21b4: 14000007     	b	0xffffffc0801a21d0 <futex_requeue+0x38c>
+ffffffc0801a21b8: 2a1f03e8     	mov	w8, wzr
+ffffffc0801a21bc: 9101b289     	add	x9, x20, #0x6c
+ffffffc0801a21c0: 5280004a     	mov	w10, #0x2       // =2
+ffffffc0801a21c4: 88e8fd2a     	casal	w8, w10, [x9]
+ffffffc0801a21c8: 34000248     	cbz	w8, 0xffffffc0801a2210 <futex_requeue+0x3cc>
+ffffffc0801a21cc: 17fffff9     	b	0xffffffc0801a21b0 <futex_requeue+0x36c>
+ffffffc0801a21d0: aa1f03e9     	mov	x9, xzr
+ffffffc0801a21d4: 9101b28a     	add	x10, x20, #0x6c
+ffffffc0801a21d8: 5280004c     	mov	w12, #0x2       // =2
+ffffffc0801a21dc: f9800151     	prfm	pstl1strm, [x10]
+ffffffc0801a21e0: 885f7d48     	ldxr	w8, [x10]
+ffffffc0801a21e4: 4a09010b     	eor	w11, w8, w9
+ffffffc0801a21e8: 3500008b     	cbnz	w11, 0xffffffc0801a21f8 <futex_requeue+0x3b4>
+ffffffc0801a21ec: 880bfd4c     	stlxr	w11, w12, [x10]
+ffffffc0801a21f0: 35ffff8b     	cbnz	w11, 0xffffffc0801a21e0 <futex_requeue+0x39c>
+ffffffc0801a21f4: d5033bbf     	dmb	ish
+ffffffc0801a21f8: 340000c8     	cbz	w8, 0xffffffc0801a2210 <futex_requeue+0x3cc>
+ffffffc0801a21fc: 17ffffed     	b	0xffffffc0801a21b0 <futex_requeue+0x36c>
+ffffffc0801a2200: 7100051f     	cmp	w8, #0x1
+ffffffc0801a2204: 54000061     	b.ne	0xffffffc0801a2210 <futex_requeue+0x3cc>
+ffffffc0801a2208: 12800155     	mov	w21, #-0xb      // =-11
+ffffffc0801a220c: 1400001a     	b	0xffffffc0801a2274 <futex_requeue+0x430>
+ffffffc0801a2210: f9401684     	ldr	x4, [x20, #0x28]
+ffffffc0801a2214: b94027e6     	ldr	w6, [sp, #0x24]
+ffffffc0801a2218: d10123a2     	sub	x2, x29, #0x48
+ffffffc0801a221c: d10143a3     	sub	x3, x29, #0x50
+ffffffc0801a2220: 910103e5     	add	x5, sp, #0x40
+ffffffc0801a2224: aa1b03e0     	mov	x0, x27
+ffffffc0801a2228: aa1603e1     	mov	x1, x22
+ffffffc0801a222c: f9002a9f     	str	xzr, [x20, #0x50]
+ffffffc0801a2230: 97fffae4     	bl	0xffffffc0801a0dc0 <futex_lock_pi_atomic>
+ffffffc0801a2234: 7100041f     	cmp	w0, #0x1
+ffffffc0801a2238: 540014e0     	b.eq	0xffffffc0801a24d4 <futex_requeue+0x690>
+ffffffc0801a223c: 2a0003f5     	mov	w21, w0
+ffffffc0801a2240: 36f80080     	tbz	w0, #0x1f, 0xffffffc0801a2250 <futex_requeue+0x40c>
+ffffffc0801a2244: aa1403e0     	mov	x0, x20
+ffffffc0801a2248: 2a1503e1     	mov	w1, w21
+ffffffc0801a224c: 94000167     	bl	0xffffffc0801a27e8 <futex_requeue_pi_complete>
+ffffffc0801a2250: 110042a8     	add	w8, w21, #0x10
+ffffffc0801a2254: 7100451f     	cmp	w8, #0x11
+ffffffc0801a2258: 54000368     	b.hi	0xffffffc0801a22c4 <futex_requeue+0x480>
+ffffffc0801a225c: b0007c0b     	adrp	x11, 0xffffffc081123000 <timens_for_children_operations>
+ffffffc0801a2260: 9103016b     	add	x11, x11, #0xc0
+ffffffc0801a2264: 10000009     	adr	x9, 0xffffffc0801a2264 <futex_requeue+0x420>
+ffffffc0801a2268: b8a8796a     	ldrsw	x10, [x11, x8, lsl #2]
+ffffffc0801a226c: 8b0a0129     	add	x9, x9, x10
+ffffffc0801a2270: d61f0120     	br	x9
+ffffffc0801a2274: f9401be0     	ldr	x0, [sp, #0x30]
+ffffffc0801a2278: 943ac90e     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a227c: eb1602ff     	cmp	x23, x22
+ffffffc0801a2280: 54000060     	b.eq	0xffffffc0801a228c <futex_requeue+0x448>
+ffffffc0801a2284: aa1903e0     	mov	x0, x25
+ffffffc0801a2288: 943ac90a     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a228c: 17ffff26     	b	0xffffffc0801a1f24 <futex_requeue+0xe0>
+ffffffc0801a2290: 12800008     	mov	w8, #-0x1       // =-1
+ffffffc0801a2294: b82802df     	stadd	w8, [x22]
+ffffffc0801a2298: 17ffff29     	b	0xffffffc0801a1f3c <futex_requeue+0xf8>
+ffffffc0801a229c: 5280002a     	mov	w10, #0x1       // =1
+ffffffc0801a22a0: f98002d1     	prfm	pstl1strm, [x22]
+ffffffc0801a22a4: 885f7ec8     	ldxr	w8, [x22]
+ffffffc0801a22a8: 4b0a0108     	sub	w8, w8, w10
+ffffffc0801a22ac: 88097ec8     	stxr	w9, w8, [x22]
+ffffffc0801a22b0: 35ffffa9     	cbnz	w9, 0xffffffc0801a22a4 <futex_requeue+0x460>
+ffffffc0801a22b4: 17ffffa2     	b	0xffffffc0801a213c <futex_requeue+0x2f8>
+ffffffc0801a22b8: 128002b9     	mov	w25, #-0x16     // =-22
+ffffffc0801a22bc: 1400009e     	b	0xffffffc0801a2534 <futex_requeue+0x6f0>
+ffffffc0801a22c0: 128002b5     	mov	w21, #-0x16     // =-22
+ffffffc0801a22c4: 2a1f03f8     	mov	w24, wzr
+ffffffc0801a22c8: 1400008e     	b	0xffffffc0801a2500 <futex_requeue+0x6bc>
+ffffffc0801a22cc: aa1903fa     	mov	x26, x25
+ffffffc0801a22d0: 2a1f03f8     	mov	w24, wzr
+ffffffc0801a22d4: aa1703f9     	mov	x25, x23
+ffffffc0801a22d8: 2a1f03f5     	mov	w21, wzr
+ffffffc0801a22dc: 29442fec     	ldp	w12, w11, [sp, #0x20]
+ffffffc0801a22e0: f8408f3c     	ldr	x28, [x25, #0x8]!
+ffffffc0801a22e4: eb19039f     	cmp	x28, x25
+ffffffc0801a22e8: 54001060     	b.eq	0xffffffc0801a24f4 <futex_requeue+0x6b0>
+ffffffc0801a22ec: 4b0c0308     	sub	w8, w24, w12
+ffffffc0801a22f0: 6b0b011f     	cmp	w8, w11
+ffffffc0801a22f4: 5400100a     	b.ge	0xffffffc0801a24f4 <futex_requeue+0x6b0>
+ffffffc0801a22f8: 2a1f03f5     	mov	w21, wzr
+ffffffc0801a22fc: aa1c03e8     	mov	x8, x28
+ffffffc0801a2300: f842051b     	ldr	x27, [x8], #0x20
+ffffffc0801a2304: b4000d08     	cbz	x8, 0xffffffc0801a24a4 <futex_requeue+0x660>
+ffffffc0801a2308: f9401789     	ldr	x9, [x28, #0x28]
+ffffffc0801a230c: f85d83aa     	ldur	x10, [x29, #-0x28]
+ffffffc0801a2310: eb0a013f     	cmp	x9, x10
+ffffffc0801a2314: 54000c81     	b.ne	0xffffffc0801a24a4 <futex_requeue+0x660>
+ffffffc0801a2318: f9400108     	ldr	x8, [x8]
+ffffffc0801a231c: f85d03a9     	ldur	x9, [x29, #-0x30]
+ffffffc0801a2320: eb09011f     	cmp	x8, x9
+ffffffc0801a2324: 54000c01     	b.ne	0xffffffc0801a24a4 <futex_requeue+0x660>
+ffffffc0801a2328: b9403388     	ldr	w8, [x28, #0x30]
+ffffffc0801a232c: b85e03a9     	ldur	w9, [x29, #-0x20]
+ffffffc0801a2330: 6b09011f     	cmp	w8, w9
+ffffffc0801a2334: 54000b81     	b.ne	0xffffffc0801a24a4 <futex_requeue+0x660>
+ffffffc0801a2338: f9402388     	ldr	x8, [x28, #0x40]
+ffffffc0801a233c: d1006394     	sub	x20, x28, #0x18
+ffffffc0801a2340: 34000573     	cbz	w19, 0xffffffc0801a23ec <futex_requeue+0x5a8>
+ffffffc0801a2344: b4000d68     	cbz	x8, 0xffffffc0801a24f0 <futex_requeue+0x6ac>
+ffffffc0801a2348: f9401f88     	ldr	x8, [x28, #0x38]
+ffffffc0801a234c: b5000d28     	cbnz	x8, 0xffffffc0801a24f0 <futex_requeue+0x6ac>
+ffffffc0801a2350: f9402788     	ldr	x8, [x28, #0x48]
+ffffffc0801a2354: b4000ce8     	cbz	x8, 0xffffffc0801a24f0 <futex_requeue+0x6ac>
+ffffffc0801a2358: f9400509     	ldr	x9, [x8, #0x8]
+ffffffc0801a235c: f85c03aa     	ldur	x10, [x29, #-0x40]
+ffffffc0801a2360: eb0a013f     	cmp	x9, x10
+ffffffc0801a2364: 54000c61     	b.ne	0xffffffc0801a24f0 <futex_requeue+0x6ac>
+ffffffc0801a2368: f9400109     	ldr	x9, [x8]
+ffffffc0801a236c: f85b83aa     	ldur	x10, [x29, #-0x48]
+ffffffc0801a2370: eb0a013f     	cmp	x9, x10
+ffffffc0801a2374: 54000be1     	b.ne	0xffffffc0801a24f0 <futex_requeue+0x6ac>
+ffffffc0801a2378: b9401108     	ldr	w8, [x8, #0x10]
+ffffffc0801a237c: b85c83a9     	ldur	w9, [x29, #-0x38]
+ffffffc0801a2380: 6b09011f     	cmp	w8, w9
+ffffffc0801a2384: 54000b61     	b.ne	0xffffffc0801a24f0 <futex_requeue+0x6ac>
+ffffffc0801a2388: f85b03a0     	ldur	x0, [x29, #-0x50]
+ffffffc0801a238c: 97fff9d1     	bl	0xffffffc0801a0ad0 <get_pi_state>
+ffffffc0801a2390: 91015389     	add	x9, x28, #0x54
+ffffffc0801a2394: f85b03a8     	ldur	x8, [x29, #-0x50]
+ffffffc0801a2398: 88dffd29     	ldar	w9, [x9]
+ffffffc0801a239c: 35000489     	cbnz	w9, 0xffffffc0801a242c <futex_requeue+0x5e8>
+ffffffc0801a23a0: 14000007     	b	0xffffffc0801a23bc <futex_requeue+0x578>
+ffffffc0801a23a4: 2a1f03e9     	mov	w9, wzr
+ffffffc0801a23a8: 9101538a     	add	x10, x28, #0x54
+ffffffc0801a23ac: 5280004b     	mov	w11, #0x2       // =2
+ffffffc0801a23b0: 88e9fd4b     	casal	w9, w11, [x10]
+ffffffc0801a23b4: 34000469     	cbz	w9, 0xffffffc0801a2440 <futex_requeue+0x5fc>
+ffffffc0801a23b8: 17fffff9     	b	0xffffffc0801a239c <futex_requeue+0x558>
+ffffffc0801a23bc: aa1f03ea     	mov	x10, xzr
+ffffffc0801a23c0: 9101538b     	add	x11, x28, #0x54
+ffffffc0801a23c4: 5280004d     	mov	w13, #0x2       // =2
+ffffffc0801a23c8: f9800171     	prfm	pstl1strm, [x11]
+ffffffc0801a23cc: 885f7d69     	ldxr	w9, [x11]
+ffffffc0801a23d0: 4a0a012c     	eor	w12, w9, w10
+ffffffc0801a23d4: 3500008c     	cbnz	w12, 0xffffffc0801a23e4 <futex_requeue+0x5a0>
+ffffffc0801a23d8: 880cfd6d     	stlxr	w12, w13, [x11]
+ffffffc0801a23dc: 35ffff8c     	cbnz	w12, 0xffffffc0801a23cc <futex_requeue+0x588>
+ffffffc0801a23e0: d5033bbf     	dmb	ish
+ffffffc0801a23e4: 340002e9     	cbz	w9, 0xffffffc0801a2440 <futex_requeue+0x5fc>
+ffffffc0801a23e8: 17ffffed     	b	0xffffffc0801a239c <futex_requeue+0x558>
+ffffffc0801a23ec: b5000828     	cbnz	x8, 0xffffffc0801a24f0 <futex_requeue+0x6ac>
+ffffffc0801a23f0: f9401f88     	ldr	x8, [x28, #0x38]
+ffffffc0801a23f4: b50007e8     	cbnz	x8, 0xffffffc0801a24f0 <futex_requeue+0x6ac>
+ffffffc0801a23f8: 11000718     	add	w24, w24, #0x1
+ffffffc0801a23fc: 6b0c031f     	cmp	w24, w12
+ffffffc0801a2400: 540000ed     	b.le	0xffffffc0801a241c <futex_requeue+0x5d8>
+ffffffc0801a2404: d10123a3     	sub	x3, x29, #0x48
+ffffffc0801a2408: aa1403e0     	mov	x0, x20
+ffffffc0801a240c: aa1703e1     	mov	x1, x23
+ffffffc0801a2410: aa1603e2     	mov	x2, x22
+ffffffc0801a2414: 9400008d     	bl	0xffffffc0801a2648 <requeue_futex>
+ffffffc0801a2418: 14000022     	b	0xffffffc0801a24a0 <futex_requeue+0x65c>
+ffffffc0801a241c: 910123e0     	add	x0, sp, #0x48
+ffffffc0801a2420: aa1403e1     	mov	x1, x20
+ffffffc0801a2424: 9400022a     	bl	0xffffffc0801a2ccc <futex_wake_mark>
+ffffffc0801a2428: 1400001e     	b	0xffffffc0801a24a0 <futex_requeue+0x65c>
+ffffffc0801a242c: 7100053f     	cmp	w9, #0x1
+ffffffc0801a2430: 54000081     	b.ne	0xffffffc0801a2440 <futex_requeue+0x5fc>
+ffffffc0801a2434: f85b03a0     	ldur	x0, [x29, #-0x50]
+ffffffc0801a2438: 97fff9ce     	bl	0xffffffc0801a0b70 <put_pi_state>
+ffffffc0801a243c: 14000019     	b	0xffffffc0801a24a0 <futex_requeue+0x65c>
+ffffffc0801a2440: f9001f88     	str	x8, [x28, #0x38]
+ffffffc0801a2444: f9402381     	ldr	x1, [x28, #0x40]
+ffffffc0801a2448: f9400b82     	ldr	x2, [x28, #0x10]
+ffffffc0801a244c: f85b03a8     	ldur	x8, [x29, #-0x50]
+ffffffc0801a2450: 91004100     	add	x0, x8, #0x10
+ffffffc0801a2454: 943abf01     	bl	0xffffffc081052058 <rt_mutex_start_proxy_lock>
+ffffffc0801a2458: 2a0003f5     	mov	w21, w0
+ffffffc0801a245c: 34000100     	cbz	w0, 0xffffffc0801a247c <futex_requeue+0x638>
+ffffffc0801a2460: 710006bf     	cmp	w21, #0x1
+ffffffc0801a2464: 540008c1     	b.ne	0xffffffc0801a257c <futex_requeue+0x738>
+ffffffc0801a2468: d10123a1     	sub	x1, x29, #0x48
+ffffffc0801a246c: aa1403e0     	mov	x0, x20
+ffffffc0801a2470: aa1603e2     	mov	x2, x22
+ffffffc0801a2474: 940000a8     	bl	0xffffffc0801a2714 <requeue_pi_wake_futex>
+ffffffc0801a2478: 14000009     	b	0xffffffc0801a249c <futex_requeue+0x658>
+ffffffc0801a247c: d10123a3     	sub	x3, x29, #0x48
+ffffffc0801a2480: aa1403e0     	mov	x0, x20
+ffffffc0801a2484: aa1703e1     	mov	x1, x23
+ffffffc0801a2488: aa1603e2     	mov	x2, x22
+ffffffc0801a248c: 9400006f     	bl	0xffffffc0801a2648 <requeue_futex>
+ffffffc0801a2490: aa1403e0     	mov	x0, x20
+ffffffc0801a2494: 2a1f03e1     	mov	w1, wzr
+ffffffc0801a2498: 940000d4     	bl	0xffffffc0801a27e8 <futex_requeue_pi_complete>
+ffffffc0801a249c: 11000718     	add	w24, w24, #0x1
+ffffffc0801a24a0: 29442fec     	ldp	w12, w11, [sp, #0x20]
+ffffffc0801a24a4: eb19037f     	cmp	x27, x25
+ffffffc0801a24a8: 54000260     	b.eq	0xffffffc0801a24f4 <futex_requeue+0x6b0>
+ffffffc0801a24ac: 4b0c0308     	sub	w8, w24, w12
+ffffffc0801a24b0: aa1b03fc     	mov	x28, x27
+ffffffc0801a24b4: 6b0b011f     	cmp	w8, w11
+ffffffc0801a24b8: 54fff22b     	b.lt	0xffffffc0801a22fc <futex_requeue+0x4b8>
+ffffffc0801a24bc: 1400000e     	b	0xffffffc0801a24f4 <futex_requeue+0x6b0>
+ffffffc0801a24c0: 2a1f03f8     	mov	w24, wzr
+ffffffc0801a24c4: 12800155     	mov	w21, #-0xb      // =-11
+ffffffc0801a24c8: 1400000e     	b	0xffffffc0801a2500 <futex_requeue+0x6bc>
+ffffffc0801a24cc: 2a0003f9     	mov	w25, w0
+ffffffc0801a24d0: 14000019     	b	0xffffffc0801a2534 <futex_requeue+0x6f0>
+ffffffc0801a24d4: d10123a1     	sub	x1, x29, #0x48
+ffffffc0801a24d8: aa1403e0     	mov	x0, x20
+ffffffc0801a24dc: aa1603e2     	mov	x2, x22
+ffffffc0801a24e0: aa1903fa     	mov	x26, x25
+ffffffc0801a24e4: 9400008c     	bl	0xffffffc0801a2714 <requeue_pi_wake_futex>
+ffffffc0801a24e8: 52800038     	mov	w24, #0x1       // =1
+ffffffc0801a24ec: 17ffff7a     	b	0xffffffc0801a22d4 <futex_requeue+0x490>
+ffffffc0801a24f0: 128002b5     	mov	w21, #-0x16     // =-22
+ffffffc0801a24f4: f85b03a0     	ldur	x0, [x29, #-0x50]
+ffffffc0801a24f8: 97fff99e     	bl	0xffffffc0801a0b70 <put_pi_state>
+ffffffc0801a24fc: aa1a03f9     	mov	x25, x26
+ffffffc0801a2500: f9401be0     	ldr	x0, [sp, #0x30]
+ffffffc0801a2504: 943ac86b     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a2508: eb1602ff     	cmp	x23, x22
+ffffffc0801a250c: 54000060     	b.eq	0xffffffc0801a2518 <futex_requeue+0x6d4>
+ffffffc0801a2510: aa1903e0     	mov	x0, x25
+ffffffc0801a2514: 943ac867     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a2518: 910123e0     	add	x0, sp, #0x48
+ffffffc0801a251c: 97fd2765     	bl	0xffffffc0800ec2b0 <wake_up_q>
+ffffffc0801a2520: 14000021     	b	0xffffffc0801a25a4 <futex_requeue+0x760>
+ffffffc0801a2524: 12800008     	mov	w8, #-0x1       // =-1
+ffffffc0801a2528: b82802df     	stadd	w8, [x22]
+ffffffc0801a252c: 710002bf     	cmp	w21, #0x0
+ffffffc0801a2530: 1a950319     	csel	w25, w24, w21, eq
+ffffffc0801a2534: d5384108     	mrs	x8, SP_EL0
+ffffffc0801a2538: f9431108     	ldr	x8, [x8, #0x620]
+ffffffc0801a253c: f85f03a9     	ldur	x9, [x29, #-0x10]
+ffffffc0801a2540: eb09011f     	cmp	x8, x9
+ffffffc0801a2544: 540002e1     	b.ne	0xffffffc0801a25a0 <futex_requeue+0x75c>
+ffffffc0801a2548: 2a1903e0     	mov	w0, w25
+ffffffc0801a254c: a9504ff4     	ldp	x20, x19, [sp, #0x100]
+ffffffc0801a2550: a94f57f6     	ldp	x22, x21, [sp, #0xf0]
+ffffffc0801a2554: a94e5ff8     	ldp	x24, x23, [sp, #0xe0]
+ffffffc0801a2558: a94d67fa     	ldp	x26, x25, [sp, #0xd0]
+ffffffc0801a255c: a94c6ffc     	ldp	x28, x27, [sp, #0xc0]
+ffffffc0801a2560: a94b7bfd     	ldp	x29, x30, [sp, #0xb0]
+ffffffc0801a2564: 910443ff     	add	sp, sp, #0x110
+ffffffc0801a2568: d50323bf     	autiasp
+ffffffc0801a256c: d65f03c0     	ret
+ffffffc0801a2570: aa1903fa     	mov	x26, x25
+ffffffc0801a2574: 2a1503f8     	mov	w24, w21
+ffffffc0801a2578: 17ffff57     	b	0xffffffc0801a22d4 <futex_requeue+0x490>
+ffffffc0801a257c: f9001f9f     	str	xzr, [x28, #0x38]
+ffffffc0801a2580: f85b03a0     	ldur	x0, [x29, #-0x50]
+ffffffc0801a2584: 97fff97b     	bl	0xffffffc0801a0b70 <put_pi_state>
+ffffffc0801a2588: aa1403e0     	mov	x0, x20
+ffffffc0801a258c: 2a1503e1     	mov	w1, w21
+ffffffc0801a2590: 94000096     	bl	0xffffffc0801a27e8 <futex_requeue_pi_complete>
+ffffffc0801a2594: 17ffffd8     	b	0xffffffc0801a24f4 <futex_requeue+0x6b0>
+ffffffc0801a2598: 128001b9     	mov	w25, #-0xe      // =-14
+ffffffc0801a259c: 17ffffe6     	b	0xffffffc0801a2534 <futex_requeue+0x6f0>
+ffffffc0801a25a0: 943a8d91     	bl	0xffffffc081045be4 <__stack_chk_fail>
+ffffffc0801a25a4: 52800028     	mov	w8, #0x1        // =1
+ffffffc0801a25a8: f98002d1     	prfm	pstl1strm, [x22]
+ffffffc0801a25ac: 885f7ec9     	ldxr	w9, [x22]
+ffffffc0801a25b0: 4b080129     	sub	w9, w9, w8
+ffffffc0801a25b4: 880a7ec9     	stxr	w10, w9, [x22]
+ffffffc0801a25b8: 35ffffaa     	cbnz	w10, 0xffffffc0801a25ac <futex_requeue+0x768>
+ffffffc0801a25bc: 17ffffdc     	b	0xffffffc0801a252c <futex_requeue+0x6e8>
+
+ffffffc0801a25c0 <uaccess_ttbr0_enable>:
+ffffffc0801a25c0: 1400000e     	b	0xffffffc0801a25f8 <uaccess_ttbr0_enable+0x38>
+ffffffc0801a25c4: d503201f     	nop
+ffffffc0801a25c8: d53b4228     	mrs	x8, DAIF
+ffffffc0801a25cc: d50343df     	msr	DAIFSet, #0x3
+ffffffc0801a25d0: d5384109     	mrs	x9, SP_EL0
+ffffffc0801a25d4: f9400529     	ldr	x9, [x9, #0x8]
+ffffffc0801a25d8: d538202a     	mrs	x10, TTBR1_EL1
+ffffffc0801a25dc: aa0903eb     	mov	x11, x9
+ffffffc0801a25e0: b340bd4b     	bfxil	x11, x10, #0, #48
+ffffffc0801a25e4: d518202b     	msr	TTBR1_EL1, x11
+ffffffc0801a25e8: d5182009     	msr	TTBR0_EL1, x9
+ffffffc0801a25ec: d5033fdf     	isb
+ffffffc0801a25f0: d51b4228     	msr	DAIF, x8
+ffffffc0801a25f4: d65f03c0     	ret
+ffffffc0801a25f8: d0010968     	adrp	x8, 0xffffffc0822d0000 <reset_devices>
+ffffffc0801a25fc: f9433108     	ldr	x8, [x8, #0x660]
+ffffffc0801a2600: b737ffa8     	tbnz	x8, #0x26, 0xffffffc0801a25f4 <uaccess_ttbr0_enable+0x34>
+ffffffc0801a2604: 17fffff1     	b	0xffffffc0801a25c8 <uaccess_ttbr0_enable+0x8>
+
+ffffffc0801a2608 <uaccess_ttbr0_disable>:
+ffffffc0801a2608: 1400000c     	b	0xffffffc0801a2638 <uaccess_ttbr0_disable+0x30>
+ffffffc0801a260c: d503201f     	nop
+ffffffc0801a2610: d53b4228     	mrs	x8, DAIF
+ffffffc0801a2614: d50343df     	msr	DAIFSet, #0x3
+ffffffc0801a2618: d5382029     	mrs	x9, TTBR1_EL1
+ffffffc0801a261c: 9240bd29     	and	x9, x9, #0xffffffffffff
+ffffffc0801a2620: d140052a     	sub	x10, x9, #0x1, lsl #12 // =0x1000
+ffffffc0801a2624: d518200a     	msr	TTBR0_EL1, x10
+ffffffc0801a2628: d5182029     	msr	TTBR1_EL1, x9
+ffffffc0801a262c: d5033fdf     	isb
+ffffffc0801a2630: d51b4228     	msr	DAIF, x8
+ffffffc0801a2634: d65f03c0     	ret
+ffffffc0801a2638: d0010968     	adrp	x8, 0xffffffc0822d0000 <reset_devices>
+ffffffc0801a263c: f9433108     	ldr	x8, [x8, #0x660]
+ffffffc0801a2640: b737ffa8     	tbnz	x8, #0x26, 0xffffffc0801a2634 <uaccess_ttbr0_disable+0x2c>
+ffffffc0801a2644: 17fffff3     	b	0xffffffc0801a2610 <uaccess_ttbr0_disable+0x8>
+
+ffffffc0801a2648 <requeue_futex>:
+ffffffc0801a2648: d503233f     	paciasp
+ffffffc0801a264c: a9bc7bfd     	stp	x29, x30, [sp, #-0x40]!
+ffffffc0801a2650: f9000bf7     	str	x23, [sp, #0x10]
+ffffffc0801a2654: a90257f6     	stp	x22, x21, [sp, #0x20]
+ffffffc0801a2658: a9034ff4     	stp	x20, x19, [sp, #0x30]
+ffffffc0801a265c: 910003fd     	mov	x29, sp
+ffffffc0801a2660: aa0303f3     	mov	x19, x3
+ffffffc0801a2664: eb02003f     	cmp	x1, x2
+ffffffc0801a2668: aa0003f4     	mov	x20, x0
+ffffffc0801a266c: 54000260     	b.eq	0xffffffc0801a26b8 <requeue_futex+0x70>
+ffffffc0801a2670: aa0103f7     	mov	x23, x1
+ffffffc0801a2674: 91002021     	add	x1, x1, #0x8
+ffffffc0801a2678: aa1403e0     	mov	x0, x20
+ffffffc0801a267c: aa0203f5     	mov	x21, x2
+ffffffc0801a2680: 91002056     	add	x22, x2, #0x8
+ffffffc0801a2684: 943a23de     	bl	0xffffffc08102b5fc <plist_del>
+ffffffc0801a2688: 14000016     	b	0xffffffc0801a26e0 <requeue_futex+0x98>
+ffffffc0801a268c: 12800008     	mov	w8, #-0x1       // =-1
+ffffffc0801a2690: b82802ff     	stadd	w8, [x23]
+ffffffc0801a2694: 1400001a     	b	0xffffffc0801a26fc <requeue_futex+0xb4>
+ffffffc0801a2698: 52800028     	mov	w8, #0x1        // =1
+ffffffc0801a269c: b82802bf     	stadd	w8, [x21]
+ffffffc0801a26a0: d5033bbf     	dmb	ish
+ffffffc0801a26a4: aa1403e0     	mov	x0, x20
+ffffffc0801a26a8: aa1603e1     	mov	x1, x22
+ffffffc0801a26ac: 943a2387     	bl	0xffffffc08102b4c8 <plist_add>
+ffffffc0801a26b0: 910012a8     	add	x8, x21, #0x4
+ffffffc0801a26b4: f9001a88     	str	x8, [x20, #0x30]
+ffffffc0801a26b8: a940a269     	ldp	x9, x8, [x19, #0x8]
+ffffffc0801a26bc: f940026a     	ldr	x10, [x19]
+ffffffc0801a26c0: a9042289     	stp	x9, x8, [x20, #0x40]
+ffffffc0801a26c4: f9001e8a     	str	x10, [x20, #0x38]
+ffffffc0801a26c8: a9434ff4     	ldp	x20, x19, [sp, #0x30]
+ffffffc0801a26cc: f9400bf7     	ldr	x23, [sp, #0x10]
+ffffffc0801a26d0: a94257f6     	ldp	x22, x21, [sp, #0x20]
+ffffffc0801a26d4: a8c47bfd     	ldp	x29, x30, [sp], #0x40
+ffffffc0801a26d8: d50323bf     	autiasp
+ffffffc0801a26dc: d65f03c0     	ret
+ffffffc0801a26e0: 52800028     	mov	w8, #0x1        // =1
+ffffffc0801a26e4: f98002f1     	prfm	pstl1strm, [x23]
+ffffffc0801a26e8: 885f7ee9     	ldxr	w9, [x23]
+ffffffc0801a26ec: 4b080129     	sub	w9, w9, w8
+ffffffc0801a26f0: 880a7ee9     	stxr	w10, w9, [x23]
+ffffffc0801a26f4: 35ffffaa     	cbnz	w10, 0xffffffc0801a26e8 <requeue_futex+0xa0>
+ffffffc0801a26f8: 17ffffe7     	b	0xffffffc0801a2694 <requeue_futex+0x4c>
+ffffffc0801a26fc: f98002b1     	prfm	pstl1strm, [x21]
+ffffffc0801a2700: 885f7ea8     	ldxr	w8, [x21]
+ffffffc0801a2704: 11000508     	add	w8, w8, #0x1
+ffffffc0801a2708: 88097ea8     	stxr	w9, w8, [x21]
+ffffffc0801a270c: 35ffffa9     	cbnz	w9, 0xffffffc0801a2700 <requeue_futex+0xb8>
+ffffffc0801a2710: 17ffffe4     	b	0xffffffc0801a26a0 <requeue_futex+0x58>

@@ -1,0 +1,264 @@
+
+D:\CVE-2026-43499\vmlinux_extracted:	file format elf64-littleaarch64
+
+Disassembly of section .kernel:
+
+ffffffc0801a2890 <futex_wait_requeue_pi>:
+ffffffc0801a2890: d503233f     	paciasp
+ffffffc0801a2894: d10703ff     	sub	sp, sp, #0x1c0
+ffffffc0801a2898: a9167bfd     	stp	x29, x30, [sp, #0x160]
+ffffffc0801a289c: a9176ffc     	stp	x28, x27, [sp, #0x170]
+ffffffc0801a28a0: a91867fa     	stp	x26, x25, [sp, #0x180]
+ffffffc0801a28a4: a9195ff8     	stp	x24, x23, [sp, #0x190]
+ffffffc0801a28a8: a91a57f6     	stp	x22, x21, [sp, #0x1a0]
+ffffffc0801a28ac: a91b4ff4     	stp	x20, x19, [sp, #0x1b0]
+ffffffc0801a28b0: 910583fd     	add	x29, sp, #0x160
+ffffffc0801a28b4: d5384108     	mrs	x8, SP_EL0
+ffffffc0801a28b8: 128002b9     	mov	w25, #-0x16     // =-22
+ffffffc0801a28bc: f9431108     	ldr	x8, [x8, #0x620]
+ffffffc0801a28c0: f81f03a8     	stur	x8, [x29, #-0x10]
+ffffffc0801a28c4: 12800008     	mov	w8, #-0x1       // =-1
+ffffffc0801a28c8: a907ffff     	stp	xzr, xzr, [sp, #0x78]
+ffffffc0801a28cc: a906ffff     	stp	xzr, xzr, [sp, #0x68]
+ffffffc0801a28d0: a905ffff     	stp	xzr, xzr, [sp, #0x58]
+ffffffc0801a28d4: a904ffff     	stp	xzr, xzr, [sp, #0x48]
+ffffffc0801a28d8: a903ffff     	stp	xzr, xzr, [sp, #0x38]
+ffffffc0801a28dc: a902ffff     	stp	xzr, xzr, [sp, #0x28]
+ffffffc0801a28e0: a901ffff     	stp	xzr, xzr, [sp, #0x18]
+ffffffc0801a28e4: a900ffff     	stp	xzr, xzr, [sp, #0x8]
+ffffffc0801a28e8: b9006be8     	str	w8, [sp, #0x68]
+ffffffc0801a28ec: f90003ff     	str	xzr, [sp]
+ffffffc0801a28f0: 34000724     	cbz	w4, 0xffffffc0801a29d4 <futex_wait_requeue_pi+0x144>
+ffffffc0801a28f4: aa0503f4     	mov	x20, x5
+ffffffc0801a28f8: aa0003f7     	mov	x23, x0
+ffffffc0801a28fc: eb05001f     	cmp	x0, x5
+ffffffc0801a2900: 540006a0     	b.eq	0xffffffc0801a29d4 <futex_wait_requeue_pi+0x144>
+ffffffc0801a2904: d538411a     	mrs	x26, SP_EL0
+ffffffc0801a2908: f9457b48     	ldr	x8, [x26, #0xaf0]
+ffffffc0801a290c: 2a0103f6     	mov	w22, w1
+ffffffc0801a2910: 2a0203f5     	mov	w21, w2
+ffffffc0801a2914: 910243fb     	add	x27, sp, #0x90
+ffffffc0801a2918: d10183a1     	sub	x1, x29, #0x60
+ffffffc0801a291c: aa0303e0     	mov	x0, x3
+ffffffc0801a2920: 2a1603e2     	mov	w2, w22
+ffffffc0801a2924: aa0803e3     	mov	x3, x8
+ffffffc0801a2928: 2a0403f8     	mov	w24, w4
+ffffffc0801a292c: a93e7fbf     	stp	xzr, xzr, [x29, #-0x20]
+ffffffc0801a2930: 9100a379     	add	x25, x27, #0x28
+ffffffc0801a2934: a93d7fbf     	stp	xzr, xzr, [x29, #-0x30]
+ffffffc0801a2938: a93c7fbf     	stp	xzr, xzr, [x29, #-0x40]
+ffffffc0801a293c: a93b7fbf     	stp	xzr, xzr, [x29, #-0x50]
+ffffffc0801a2940: a93a7fbf     	stp	xzr, xzr, [x29, #-0x60]
+ffffffc0801a2944: a9097fff     	stp	xzr, xzr, [sp, #0x90]
+ffffffc0801a2948: a90a7fff     	stp	xzr, xzr, [sp, #0xa0]
+ffffffc0801a294c: a90b7fff     	stp	xzr, xzr, [sp, #0xb0]
+ffffffc0801a2950: a90c7fff     	stp	xzr, xzr, [sp, #0xc0]
+ffffffc0801a2954: a90d7fff     	stp	xzr, xzr, [sp, #0xd0]
+ffffffc0801a2958: a90e7fff     	stp	xzr, xzr, [sp, #0xe0]
+ffffffc0801a295c: a90f7fff     	stp	xzr, xzr, [sp, #0xf0]
+ffffffc0801a2960: f90047ff     	str	xzr, [sp, #0x88]
+ffffffc0801a2964: 97ffedfa     	bl	0xffffffc08019e14c <futex_setup_timer>
+ffffffc0801a2968: aa0003f3     	mov	x19, x0
+ffffffc0801a296c: 52800068     	mov	w8, #0x3        // =3
+ffffffc0801a2970: 120002c1     	and	w1, w22, #0x1
+ffffffc0801a2974: 9101c3e2     	add	x2, sp, #0x70
+ffffffc0801a2978: aa1403e0     	mov	x0, x20
+ffffffc0801a297c: 52800023     	mov	w3, #0x1        // =1
+ffffffc0801a2980: f9005ff9     	str	x25, [sp, #0xb8]
+ffffffc0801a2984: 9101c3fc     	add	x28, sp, #0x70
+ffffffc0801a2988: f9004bfb     	str	x27, [sp, #0x90]
+ffffffc0801a298c: b900f3e8     	str	w8, [sp, #0xf0]
+ffffffc0801a2990: f90073ff     	str	xzr, [sp, #0xe0]
+ffffffc0801a2994: 97ffee0a     	bl	0xffffffc08019e1bc <get_futex_key>
+ffffffc0801a2998: 35001780     	cbnz	w0, 0xffffffc0801a2c88 <futex_wait_requeue_pi+0x3f8>
+ffffffc0801a299c: 910003e3     	mov	x3, sp
+ffffffc0801a29a0: 910223e4     	add	x4, sp, #0x88
+ffffffc0801a29a4: aa1703e0     	mov	x0, x23
+ffffffc0801a29a8: 2a1503e1     	mov	w1, w21
+ffffffc0801a29ac: 2a1603e2     	mov	w2, w22
+ffffffc0801a29b0: b9006bf8     	str	w24, [sp, #0x68]
+ffffffc0801a29b4: a905f3fb     	stp	x27, x28, [sp, #0x58]
+ffffffc0801a29b8: 910003f5     	mov	x21, sp
+ffffffc0801a29bc: 940004f3     	bl	0xffffffc0801a3d88 <futex_wait_setup>
+ffffffc0801a29c0: 2a0003f9     	mov	w25, w0
+ffffffc0801a29c4: 34000260     	cbz	w0, 0xffffffc0801a2a10 <futex_wait_requeue_pi+0x180>
+ffffffc0801a29c8: b4000073     	cbz	x19, 0xffffffc0801a29d4 <futex_wait_requeue_pi+0x144>
+ffffffc0801a29cc: aa1303e0     	mov	x0, x19
+ffffffc0801a29d0: 97ff9224     	bl	0xffffffc080187260 <hrtimer_cancel>
+ffffffc0801a29d4: d5384108     	mrs	x8, SP_EL0
+ffffffc0801a29d8: f9431108     	ldr	x8, [x8, #0x620]
+ffffffc0801a29dc: f85f03a9     	ldur	x9, [x29, #-0x10]
+ffffffc0801a29e0: eb09011f     	cmp	x8, x9
+ffffffc0801a29e4: 540015a1     	b.ne	0xffffffc0801a2c98 <futex_wait_requeue_pi+0x408>
+ffffffc0801a29e8: 2a1903e0     	mov	w0, w25
+ffffffc0801a29ec: a95b4ff4     	ldp	x20, x19, [sp, #0x1b0]
+ffffffc0801a29f0: a95a57f6     	ldp	x22, x21, [sp, #0x1a0]
+ffffffc0801a29f4: a9595ff8     	ldp	x24, x23, [sp, #0x190]
+ffffffc0801a29f8: a95867fa     	ldp	x26, x25, [sp, #0x180]
+ffffffc0801a29fc: a9576ffc     	ldp	x28, x27, [sp, #0x170]
+ffffffc0801a2a00: a9567bfd     	ldp	x29, x30, [sp, #0x160]
+ffffffc0801a2a04: 910703ff     	add	sp, sp, #0x1c0
+ffffffc0801a2a08: d50323bf     	autiasp
+ffffffc0801a2a0c: d65f03c0     	ret
+ffffffc0801a2a10: b100e2bf     	cmn	x21, #0x38
+ffffffc0801a2a14: 54000220     	b.eq	0xffffffc0801a2a58 <futex_wait_requeue_pi+0x1c8>
+ffffffc0801a2a18: f94023e8     	ldr	x8, [sp, #0x40]
+ffffffc0801a2a1c: f9403fe9     	ldr	x9, [sp, #0x78]
+ffffffc0801a2a20: eb09011f     	cmp	x8, x9
+ffffffc0801a2a24: 540001a1     	b.ne	0xffffffc0801a2a58 <futex_wait_requeue_pi+0x1c8>
+ffffffc0801a2a28: f9401fe8     	ldr	x8, [sp, #0x38]
+ffffffc0801a2a2c: f9403be9     	ldr	x9, [sp, #0x70]
+ffffffc0801a2a30: eb09011f     	cmp	x8, x9
+ffffffc0801a2a34: 54000121     	b.ne	0xffffffc0801a2a58 <futex_wait_requeue_pi+0x1c8>
+ffffffc0801a2a38: b9404be8     	ldr	w8, [sp, #0x48]
+ffffffc0801a2a3c: b94083e9     	ldr	w9, [sp, #0x80]
+ffffffc0801a2a40: 6b09011f     	cmp	w8, w9
+ffffffc0801a2a44: 540000a1     	b.ne	0xffffffc0801a2a58 <futex_wait_requeue_pi+0x1c8>
+ffffffc0801a2a48: f94047e0     	ldr	x0, [sp, #0x88]
+ffffffc0801a2a4c: 97fff092     	bl	0xffffffc08019ec94 <futex_q_unlock>
+ffffffc0801a2a50: 128002b9     	mov	w25, #-0x16     // =-22
+ffffffc0801a2a54: 17ffffdd     	b	0xffffffc0801a29c8 <futex_wait_requeue_pi+0x138>
+ffffffc0801a2a58: f94047e0     	ldr	x0, [sp, #0x88]
+ffffffc0801a2a5c: 910003e1     	mov	x1, sp
+ffffffc0801a2a60: aa1303e2     	mov	x2, x19
+ffffffc0801a2a64: 910003f5     	mov	x21, sp
+ffffffc0801a2a68: 940003a8     	bl	0xffffffc0801a3908 <futex_wait_queue>
+ffffffc0801a2a6c: 9101b2a8     	add	x8, x21, #0x6c
+ffffffc0801a2a70: 88dffd0a     	ldar	w10, [x8]
+ffffffc0801a2a74: 52800069     	mov	w9, #0x3        // =3
+ffffffc0801a2a78: 2a0a03e8     	mov	w8, w10
+ffffffc0801a2a7c: 71000d5f     	cmp	w10, #0x3
+ffffffc0801a2a80: 540004ec     	b.gt	0xffffffc0801a2b1c <futex_wait_requeue_pi+0x28c>
+ffffffc0801a2a84: 7100011f     	cmp	w8, #0x0
+ffffffc0801a2a88: 1a9f152b     	csinc	w11, w9, wzr, ne
+ffffffc0801a2a8c: 14000007     	b	0xffffffc0801a2aa8 <futex_wait_requeue_pi+0x218>
+ffffffc0801a2a90: 2a0803ea     	mov	w10, w8
+ffffffc0801a2a94: 9101b2ac     	add	x12, x21, #0x6c
+ffffffc0801a2a98: 88eafd8b     	casal	w10, w11, [x12]
+ffffffc0801a2a9c: 6b08015f     	cmp	w10, w8
+ffffffc0801a2aa0: 540001a0     	b.eq	0xffffffc0801a2ad4 <futex_wait_requeue_pi+0x244>
+ffffffc0801a2aa4: 17fffff5     	b	0xffffffc0801a2a78 <futex_wait_requeue_pi+0x1e8>
+ffffffc0801a2aa8: 2a0803ec     	mov	w12, w8
+ffffffc0801a2aac: 9101b2ad     	add	x13, x21, #0x6c
+ffffffc0801a2ab0: f98001b1     	prfm	pstl1strm, [x13]
+ffffffc0801a2ab4: 885f7daa     	ldxr	w10, [x13]
+ffffffc0801a2ab8: 4a0c014e     	eor	w14, w10, w12
+ffffffc0801a2abc: 3500008e     	cbnz	w14, 0xffffffc0801a2acc <futex_wait_requeue_pi+0x23c>
+ffffffc0801a2ac0: 880efdab     	stlxr	w14, w11, [x13]
+ffffffc0801a2ac4: 35ffff8e     	cbnz	w14, 0xffffffc0801a2ab4 <futex_wait_requeue_pi+0x224>
+ffffffc0801a2ac8: d5033bbf     	dmb	ish
+ffffffc0801a2acc: 6b08015f     	cmp	w10, w8
+ffffffc0801a2ad0: 54fffd41     	b.ne	0xffffffc0801a2a78 <futex_wait_requeue_pi+0x1e8>
+ffffffc0801a2ad4: 7100091f     	cmp	w8, #0x2
+ffffffc0801a2ad8: 54000201     	b.ne	0xffffffc0801a2b18 <futex_wait_requeue_pi+0x288>
+ffffffc0801a2adc: b9406fe8     	ldr	w8, [sp, #0x6c]
+ffffffc0801a2ae0: 71000d1f     	cmp	w8, #0x3
+ffffffc0801a2ae4: 540001a1     	b.ne	0xffffffc0801a2b18 <futex_wait_requeue_pi+0x288>
+ffffffc0801a2ae8: 910003e8     	mov	x8, sp
+ffffffc0801a2aec: 52800069     	mov	w9, #0x3        // =3
+ffffffc0801a2af0: 9101b108     	add	x8, x8, #0x6c
+ffffffc0801a2af4: d50320bf     	sevl
+ffffffc0801a2af8: d503205f     	wfe
+ffffffc0801a2afc: 885f7d0a     	ldxr	w10, [x8]
+ffffffc0801a2b00: 4a09014a     	eor	w10, w10, w9
+ffffffc0801a2b04: 3500004a     	cbnz	w10, 0xffffffc0801a2b0c <futex_wait_requeue_pi+0x27c>
+ffffffc0801a2b08: d503205f     	wfe
+ffffffc0801a2b0c: b9406fea     	ldr	w10, [sp, #0x6c]
+ffffffc0801a2b10: 71000d5f     	cmp	w10, #0x3
+ffffffc0801a2b14: 54ffff00     	b.eq	0xffffffc0801a2af4 <futex_wait_requeue_pi+0x264>
+ffffffc0801a2b18: b9406fe8     	ldr	w8, [sp, #0x6c]
+ffffffc0801a2b1c: 7100151f     	cmp	w8, #0x5
+ffffffc0801a2b20: 54000280     	b.eq	0xffffffc0801a2b70 <futex_wait_requeue_pi+0x2e0>
+ffffffc0801a2b24: 7100111f     	cmp	w8, #0x4
+ffffffc0801a2b28: 540004a1     	b.ne	0xffffffc0801a2bbc <futex_wait_requeue_pi+0x32c>
+ffffffc0801a2b2c: f9402be8     	ldr	x8, [sp, #0x50]
+ffffffc0801a2b30: 910243e2     	add	x2, sp, #0x90
+ffffffc0801a2b34: aa1303e1     	mov	x1, x19
+ffffffc0801a2b38: 91004115     	add	x21, x8, #0x10
+ffffffc0801a2b3c: aa1503e0     	mov	x0, x21
+ffffffc0801a2b40: 943abe09     	bl	0xffffffc081052364 <rt_mutex_wait_proxy_lock>
+ffffffc0801a2b44: f9401be8     	ldr	x8, [sp, #0x30]
+ffffffc0801a2b48: 2a0003f6     	mov	w22, w0
+ffffffc0801a2b4c: aa0803e0     	mov	x0, x8
+ffffffc0801a2b50: 943ac666     	bl	0xffffffc0810544e8 <_raw_spin_lock>
+ffffffc0801a2b54: 340006f6     	cbz	w22, 0xffffffc0801a2c30 <futex_wait_requeue_pi+0x3a0>
+ffffffc0801a2b58: 910243e1     	add	x1, sp, #0x90
+ffffffc0801a2b5c: aa1503e0     	mov	x0, x21
+ffffffc0801a2b60: 943abeb5     	bl	0xffffffc081052634 <rt_mutex_cleanup_proxy_lock>
+ffffffc0801a2b64: 7200001f     	tst	w0, #0x1
+ffffffc0801a2b68: 1a9f12d5     	csel	w21, w22, wzr, ne
+ffffffc0801a2b6c: 14000032     	b	0xffffffc0801a2c34 <futex_wait_requeue_pi+0x3a4>
+ffffffc0801a2b70: f9402be8     	ldr	x8, [sp, #0x50]
+ffffffc0801a2b74: b40005a8     	cbz	x8, 0xffffffc0801a2c28 <futex_wait_requeue_pi+0x398>
+ffffffc0801a2b78: f9401908     	ldr	x8, [x8, #0x30]
+ffffffc0801a2b7c: eb1a011f     	cmp	x8, x26
+ffffffc0801a2b80: 54000540     	b.eq	0xffffffc0801a2c28 <futex_wait_requeue_pi+0x398>
+ffffffc0801a2b84: f9401be0     	ldr	x0, [sp, #0x30]
+ffffffc0801a2b88: 943ac658     	bl	0xffffffc0810544e8 <_raw_spin_lock>
+ffffffc0801a2b8c: 910003e1     	mov	x1, sp
+ffffffc0801a2b90: aa1403e0     	mov	x0, x20
+ffffffc0801a2b94: 52800022     	mov	w2, #0x1        // =1
+ffffffc0801a2b98: 97fff9ca     	bl	0xffffffc0801a12c0 <fixup_pi_owner>
+ffffffc0801a2b9c: f9402be8     	ldr	x8, [sp, #0x50]
+ffffffc0801a2ba0: 2a0003f4     	mov	w20, w0
+ffffffc0801a2ba4: aa0803e0     	mov	x0, x8
+ffffffc0801a2ba8: 97fff7f2     	bl	0xffffffc0801a0b70 <put_pi_state>
+ffffffc0801a2bac: f9401be0     	ldr	x0, [sp, #0x30]
+ffffffc0801a2bb0: 943ac6c0     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a2bb4: 0a947e99     	and	w25, w20, w20, asr #31
+ffffffc0801a2bb8: 17ffff84     	b	0xffffffc0801a29c8 <futex_wait_requeue_pi+0x138>
+ffffffc0801a2bbc: 7100051f     	cmp	w8, #0x1
+ffffffc0801a2bc0: 540006e1     	b.ne	0xffffffc0801a2c9c <futex_wait_requeue_pi+0x40c>
+ffffffc0801a2bc4: f94047e8     	ldr	x8, [sp, #0x88]
+ffffffc0801a2bc8: 91001100     	add	x0, x8, #0x4
+ffffffc0801a2bcc: 943ac647     	bl	0xffffffc0810544e8 <_raw_spin_lock>
+ffffffc0801a2bd0: f94047f4     	ldr	x20, [sp, #0x88]
+ffffffc0801a2bd4: f9401be8     	ldr	x8, [sp, #0x30]
+ffffffc0801a2bd8: 91001289     	add	x9, x20, #0x4
+ffffffc0801a2bdc: eb08013f     	cmp	x9, x8
+ffffffc0801a2be0: 54000581     	b.ne	0xffffffc0801a2c90 <futex_wait_requeue_pi+0x400>
+ffffffc0801a2be4: 91002281     	add	x1, x20, #0x8
+ffffffc0801a2be8: 910003e0     	mov	x0, sp
+ffffffc0801a2bec: 943a2284     	bl	0xffffffc08102b5fc <plist_del>
+ffffffc0801a2bf0: 1400002c     	b	0xffffffc0801a2ca0 <futex_wait_requeue_pi+0x410>
+ffffffc0801a2bf4: 12800008     	mov	w8, #-0x1       // =-1
+ffffffc0801a2bf8: b828029f     	stadd	w8, [x20]
+ffffffc0801a2bfc: b4000073     	cbz	x19, 0xffffffc0801a2c08 <futex_wait_requeue_pi+0x378>
+ffffffc0801a2c00: f9402668     	ldr	x8, [x19, #0x48]
+ffffffc0801a2c04: b4000388     	cbz	x8, 0xffffffc0801a2c74 <futex_wait_requeue_pi+0x3e4>
+ffffffc0801a2c08: f9400348     	ldr	x8, [x26]
+ffffffc0801a2c0c: 12804019     	mov	w25, #-0x201    // =-513
+ffffffc0801a2c10: 37300348     	tbnz	w8, #0x6, 0xffffffc0801a2c78 <futex_wait_requeue_pi+0x3e8>
+ffffffc0801a2c14: f9400348     	ldr	x8, [x26]
+ffffffc0801a2c18: f240011f     	tst	x8, #0x1
+ffffffc0801a2c1c: 12800148     	mov	w8, #-0xb       // =-11
+ffffffc0801a2c20: 1a990119     	csel	w25, w8, w25, eq
+ffffffc0801a2c24: 14000015     	b	0xffffffc0801a2c78 <futex_wait_requeue_pi+0x3e8>
+ffffffc0801a2c28: 2a1f03f9     	mov	w25, wzr
+ffffffc0801a2c2c: 17ffff67     	b	0xffffffc0801a29c8 <futex_wait_requeue_pi+0x138>
+ffffffc0801a2c30: 2a1f03f5     	mov	w21, wzr
+ffffffc0801a2c34: 710002bf     	cmp	w21, #0x0
+ffffffc0801a2c38: 910003e1     	mov	x1, sp
+ffffffc0801a2c3c: aa1403e0     	mov	x0, x20
+ffffffc0801a2c40: 1a9f17e2     	cset	w2, eq
+ffffffc0801a2c44: 97fff99f     	bl	0xffffffc0801a12c0 <fixup_pi_owner>
+ffffffc0801a2c48: 0a807c08     	and	w8, w0, w0, asr #31
+ffffffc0801a2c4c: 7100001f     	cmp	w0, #0x0
+ffffffc0801a2c50: 910003e0     	mov	x0, sp
+ffffffc0801a2c54: 1a8802b4     	csel	w20, w21, w8, eq
+ffffffc0801a2c58: 97fff0a1     	bl	0xffffffc08019eedc <futex_unqueue_pi>
+ffffffc0801a2c5c: f9401be0     	ldr	x0, [sp, #0x30]
+ffffffc0801a2c60: 943ac694     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a2c64: 3100129f     	cmn	w20, #0x4
+ffffffc0801a2c68: 12800148     	mov	w8, #-0xb       // =-11
+ffffffc0801a2c6c: 1a940119     	csel	w25, w8, w20, eq
+ffffffc0801a2c70: 17ffff56     	b	0xffffffc0801a29c8 <futex_wait_requeue_pi+0x138>
+ffffffc0801a2c74: 12800db9     	mov	w25, #-0x6e     // =-110
+ffffffc0801a2c78: f94047e8     	ldr	x8, [sp, #0x88]
+ffffffc0801a2c7c: 91001100     	add	x0, x8, #0x4
+ffffffc0801a2c80: 943ac68c     	bl	0xffffffc0810546b0 <_raw_spin_unlock>
+ffffffc0801a2c84: 17ffff51     	b	0xffffffc0801a29c8 <futex_wait_requeue_pi+0x138>
+ffffffc0801a2c88: 2a0003f9     	mov	w25, w0
+ffffffc0801a2c8c: 17ffff4f     	b	0xffffffc0801a29c8 <futex_wait_requeue_pi+0x138>
+ffffffc0801a2c90: d4210000     	brk	#0x800
+ffffffc0801a2c94: 17ffffd4     	b	0xffffffc0801a2be4 <futex_wait_requeue_pi+0x354>
