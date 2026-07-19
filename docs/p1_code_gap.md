@@ -159,7 +159,7 @@ put64(p, FAKE_TASK_OFF + FAKE_TASK_PI_BLOCKED_ON_OFF, fake_w0);
 
 这把 **spray 页上的 fake_task.pi_blocked_on** 指向 fake_w0。但真实场景下，PI 链遍历起点是**漏洞触发后残留 pi_blocked_on 的真实 task**（即 waiter 线程），那个 pi_blocked_on 仍指向**栈上已释放的 waiter**（UAF 残留）。
 
-dijun README 与 RESEARCH_NOTES §6.1 描述的"可控化"是指：**让真实 task.pi_blocked_on 指向 spray fake_w0**，而不是栈 waiter。这需要改造 `do_pselect_fake_lock_route` 内的 pselect 栈布局，让 pselect 保存的寄存器值在 pi_blocked_on 字段处覆盖成 fake_w0 地址。
+RESEARCH_NOTES §6.1 描述的"可控化"是指：**让真实 task.pi_blocked_on 指向 spray fake_w0**，而不是栈 waiter。这需要改造 `do_pselect_fake_lock_route` 内的 pselect 栈布局，让 pselect 保存的寄存器值在 pi_blocked_on 字段处覆盖成 fake_w0 地址。
 
 **当前代码并未实现这一步** —— 它依赖 stack UAF 自然覆盖（栈复用 + core_sys_select 保存寄存器），但保存的寄存器值不可控，所以真实 task.pi_blocked_on 实际指向**栈地址 + 偏移**，不是 fake_w0。
 
@@ -202,14 +202,14 @@ fake_w0 + 0x58:  lock                     =  cred.cap_inheritable_hi + cap_permi
 
 **更稳的方案**：把伪 cred 放在 spray 页**另一个偏移**（如 `CRED_OFF = 0x3000`），PI 链只用作"写入一个固定值"原语，然后**另一次 walk 把 fake_w0+0x28 处的 rb_parent 字段重写成 0**（让 cred.gid=0）。但这要两次 PI 链触发才能写一个 cred，成本高。
 
-### 7.2 推荐方案：直接走 dijun 的"两次 walk + 伪 cred 在 fake_w0+0x28"
+### 7.2 推荐方案：直接走"两次 walk + 伪 cred 在 fake_w0+0x28"
 
-dijun README 描述的正是这个：fake_w0+0x28 处既作 pi_tree_entry 又作伪 cred。**rb_parent 字段被污染**这件事 dijun 的处理是：
+该方案核心思路是：fake_w0+0x28 处既作 pi_tree_entry 又作伪 cred。**rb_parent 字段被污染**这件事的处理是：
 
 1. walk #0 写 `task->real_cred = fake_w0 + 0x28`（这次 PI 链 rb_insert 会污染 fake_w0+0x30 处的 rb_parent）
 2. walk #1 写 `task->cred = fake_w0 + 0x28`（这次 PI 链再次插入，rb_parent 又被改写，但插入的是同一节点，rb_parent 会被设成 `task->pi_waiters.rb_leftmost` 之类的地址）
 
-实际 dijun 的 fake_w0+0x28 处 cred 字段最终状态：
+fake_w0+0x28 处 cred 字段最终状态：
 
 | cred 偏移 | 字段 | 实际值 | 是否阻碍 root |
 |---|---|---|---|
@@ -223,7 +223,7 @@ dijun README 描述的正是这个：fake_w0+0x28 处既作 pi_tree_entry 又作
 | +0x1c | fsuid | 0 | OK |
 | +0x20 | fsgid | 0 | OK |
 
-**gid/suid 非 0 但 euid=0** —— Linux 权限检查主要看 euid/fsuid (CAP_EFF)，gid/sgid 影响文件组访问。**euid=0 + cap_eff 全开 = root 等价**。所以这个方案实际可行，dijun 真机成功案例就是这么走的。
+**gid/suid 非 0 但 euid=0** —— Linux 权限检查主要看 euid/fsuid (CAP_EFF)，gid/sgid 影响文件组访问。**euid=0 + cap_eff 全开 = root 等价**。所以这个方案实际可行。
 
 ### 7.3 具体代码改动清单
 

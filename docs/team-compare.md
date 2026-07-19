@@ -55,7 +55,7 @@ configfs_read_once 需要一个 **ashmem fd** 来承载 target 地址 (ASHMEM_SE
 - 团队 `main.c` 探针: `configfs_read_once(afd, ...)` 在 ashmem fd 不可开时返回 0
 
 ### 团队 PROGRESS.md 自证
-> "泄露 mm->owner（KernelSnitch 已有 mm；configfs 读仍 rd=0）后走 dijun cred"
+> "泄露 mm->owner（KernelSnitch 已有 mm；configfs 读仍 rd=0）后走 cred 直写"
 > 总体进度 78%, 卡点从「盲目 stamp」收敛到「hold + 只叠 lock」
 
 即团队也确认 **configfs 读返回 0**, 和我们完全一样。

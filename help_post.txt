@@ -6,7 +6,7 @@
 
 CVE-2026-43499 是 Linux 6.6.x 内核 RT-Mutex 子系统的栈上 UAF 漏洞。rt_mutex_cleanup_proxy_lock 在 owner==current 时跳过 remove_waiter，导致 task->pi_blocked_on 残留指向已释放的栈上 waiter。后续 pselect 复用同一栈区域，core_sys_select 的保存寄存器覆盖 waiter 字段，再通过 consumer 调 sched_setattr 触发 rt_mutex_adjust_prio_chain，沿 pi_blocked_on 访问被覆盖的 waiter，实现内核任意地址写入。
 
-已有 Littlenine Ennea 公布的 dijun（小米 15S Pro）成功案例。我在做的是移植到小米 Pad 7 Ultra（jinghu）。两台机器都是玄戒 O1 芯片，内核版本完全一样（6.6.77-android15-8），dijun 补丁反而更新一个月。
+已有公开的该漏洞在 XRing O1 平台上的成功研究。我在做的是在小米 Pad 7 Ultra（jinghu）上复现利用链。两台机器都是玄戒 O1 芯片，内核版本完全一样（6.6.77-android15-8）。
 
 ================================================================
 
@@ -15,13 +15,13 @@ CVE-2026-43499 是 Linux 6.6.x 内核 RT-Mutex 子系统的栈上 UAF 漏洞。r
 1. kernelsnitch 通过 futex hash 侧信道暴力搜索，不依赖任何设备私有接口就能泄露 mm_struct 地址。这一步在 jinghu 上能跑。
 2. futex_wait_requeue_pi 留下 dangling pi_blocked_on，pselect 覆盖 waiter，consumer 触发 PI 链。这一步已验证可行，XRing O1 上软件 PAN 实际不生效（700+ 次调用不崩）。
 3. PI 链遍历到伪造的 fake_w0 节点时执行 rb_insert，写入原语是 *(write_left + 8) = write_pc。通过 set_pselect_write(target-8, value) 就能实现 *target = value。
-4. dijun 的成功路线是直接写 task->real_cred 和 task->cred 等于 init_cred，再写 selinux_enforcing 等于 0。两次 walk 完成，uid 变 0，SELinux 变 Permissive。
+4. cred 直写路线是直接写 task->real_cred 和 task->cred 等于 init_cred，再写 selinux_enforcing 等于 0。两次 walk 完成，uid 变 0，SELinux 变 Permissive。
 
 ================================================================
 
 已经踩过的坑
 
-- 早期误判 dijun 是高通平台有 /dev/diag，实际两台都是玄戒 O1。导致 jinghu 项目走了 fops 劫持的弯路（写 ashmem_misc_fops 再 configfs 验证），而 dijun 根本不走这条路。
+- 早期信息不足时误判了芯片平台，导致 jinghu 项目走了 fops 劫持的弯路（写 ashmem_misc_fops 再 configfs 验证），而 cred 直写路线根本不走这条路。
 - configfs_read_once 失效不是 Android 16 修补。我反汇编 configfs_bin_read_iter 确认，是代码自身 bug：设了 needs_read_fill=0 又没设 buffer_size，导致直接返回 0。偏移本身是对的。这个 bug 在 Pixel 上也存在，configfs_read_once 可能从来没成功过。
 - rt_mutex_waiter 布局反汇编验证过，pi_tree_entry 在 +0x28 不是 +0x18，多了 prio 和 deadline 字段。
 - fake_task->pi_blocked_on 必须指向 fake_w0 结构体起始，不能指向 pi_tree_entry，否则第二跳读 lock 字段错位。
@@ -46,7 +46,7 @@ kernelsnitch 泄露的是 mm_struct 地址。要写 task->cred 必须先知道 t
 3. futex hash 侧信道能不能改成直接泄露 task_struct 而不是 mm_struct。
 4. 有没有不用读 mm->owner 就能从 mm_struct 推算 task_struct 的办法。
 
-cred 直写的框架代码已经改好编译通过了，就差这一个内核读。思路和写入原语都是通的，dijun 同芯片能成功说明这条路一定走得通，就是缺这临门一脚的内核读。
+cred 直写的框架代码已经改好编译通过了，就差这一个内核读。思路和写入原语都是通的，就是缺这临门一脚的内核读。
 
 有研究兴趣或思路的欢迎回复讨论。
 

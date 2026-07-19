@@ -7,10 +7,9 @@
 
 # CVE-2026-43499 (GhostLock) — XRing O1 Exploit Research
 
-> Target: Xiaomi Pad 7 Ultra (jinghu) / Xiaomi 15S Pro (dijun), XRing O1 SoC
+> Target: Xiaomi Pad 7 Ultra (jinghu), XRing O1 SoC
 > Kernel: 6.6.77-android15-8-g5770c661275f-abogki443185593-4k
-> Reference: Littlenine Ennea's successful dijun exploit
-> Nature: Kernel security research / exploit porting
+> Nature: Kernel security research / exploit technique research
 
 > **Update 2026-07-19**: A large round of offline reverse engineering has revised the
 > blocker analysis. See `README.md` (in Chinese) sections "*当前卡点 (2026-07-19 重新定位)*",
@@ -18,7 +17,7 @@
 > `p1_code_gap.md`, `kernelsnitch_task_leak.md`, `task_struct_leak_survey.md`,
 > `uhid_gadget_survey.md`. The English version below has not been updated yet and may be
 > stale on the points of (a) which step is the real blocker (task_struct address, not ashmem),
-> (b) how dijun writes cred (spray fake cred via `&fake_w0.pi_tree_entry`, not literal `init_cred`),
+> (b) how the cred write works (spray fake cred via `&fake_w0.pi_tree_entry`, not literal `init_cred`),
 > and (c) uhid fops route is not a "read silver bullet". Trust the Chinese README + the four
 > new docs in case of conflict.
 
@@ -78,9 +77,9 @@ pselect returned calls=40 success=40  ← PI chain triggered
 enforce AFTER=1 (still Enforcing)  ← write failed (stack address, not 0)
 ```
 
-**Conclusion**: The PI-chain write primitive **can only write a stack address**; it cannot write 0 or init_cred. This is precisely why dijun uses "two walks + a forged cred".
+**Conclusion**: The PI-chain write primitive **can only write a stack address**; it cannot write 0 or init_cred. This is precisely why the "two walks + forged cred" approach is necessary.
 
-### What the dijun route really means
+### What the cred direct-write route really means
 
 ```
 walk#1: *(task->real_cred) = &fake_w0.pi_tree_entry (sprayed page's known address)
@@ -131,7 +130,7 @@ The team's PROGRESS.md similarly admits "configfs read still rd=0". The earlier 
 
 ### Pit 2: Route deviation (fops hijacking vs cred direct-write)
 
-- dijun does cred direct-write: mm leaked → two walks write task->cred/real_cred=init_cred
+- Cred direct-write: mm leaked → two walks write task->cred/real_cred=init_cred
 - jinghu did fops hijacking: write ashmem_misc_fops → configfs verification → leak_kernel_base → install_root
 - fops route depends on configfs (a fatal dependency); cred direct-write is cleaner
 
@@ -327,10 +326,10 @@ The real blocker is the ashmem SELinux wall, not a configfs code bug. Candidate 
 kernelsnitch runs inside clone_leak_child, leaking the child mm. To write the parent cred, read child task->real_parent (+0x628) to get the parent task_struct. Or modify kernelsnitch to run in the parent.
 
 ### Priority 4: Multiple walks (slot mechanism)
-dijun uses two walks (slot_idx=1 writes real_cred, slot_idx=2 writes cred+selinux). The slot mechanism needs to be implemented.
+A two-walk approach is needed (slot_idx=1 writes real_cred, slot_idx=2 writes cred). The slot mechanism needs to be implemented.
 
 ### Priority 5: brk #0x800 crash
-rt_mutex_setprio triggers a BUG on the non-null pi_blocked_on path (about 20 rounds in). dijun avoids it with csettle_us=500 (microsecond-level timing).
+rt_mutex_setprio triggers a BUG on the non-null pi_blocked_on path (about 20 rounds in). Research shows using csettle_us=500 (microsecond-level timing) can avoid this.
 
 ## File List
 

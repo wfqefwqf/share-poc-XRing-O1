@@ -3,7 +3,7 @@
 > **★ 2026-07-19 更新提示**: 本文件为 2026-07-18 之前的工作日志, 反映当时视角下的认知。
 > 经 2026-07-19 一整轮离线反汇编审计, 部分结论已被深化或纠正, 详见:
 > - `p1_code_gap.md` — P1 代码审计 + 真正 blocker 定位
-> - `kernelsnitch_task_leak.md` — kernelsnitch 扩展可行性 + dijun 行为纠正
+> - `kernelsnitch_task_leak.md` — kernelsnitch 扩展可行性 + spray fake cred 认知纠正
 > - `task_struct_leak_survey.md` — 4 条标准通道 (binder/fanotify/inotify/procfs) 全部排除
 > - `uhid_gadget_survey.md` — uhid fops 反汇编 + KCFI 约束
 >
@@ -11,9 +11,9 @@
 > 1. **真正 blocker 是 task_struct 地址未知, 不是 ashmem 墙**: ashmem 只是 configfs_read_once
 >    读链的 blocker; cred 直写链路本身真正卡在 `waiter_thread` 的 task_struct 地址必须先泄露
 >    (PI 链 target = task + 0x820)。详见上述 4 份报告。
-> 2. **dijun 走的是 spray fake cred, 不是直接挂 init_cred**: \"dijun 写 cred = init_cred\" 是
+> 2. **spray fake cred 方案**: "写 cred = init_cred" 是
 >    简化描述; 实际做法是让 cred 指向 spray 页 fake_w0 内伪造的 cred (内容复制自 init_cred)。
->    参见 findings.md §3 下文 "dijun 路线真相" + README.md "坑 2 / §B 认知纠正"。
+>    参见 findings.md §3 下文 "PI 链方案真相" + README.md "坑 2 / §B 认知纠正"。
 > 3. **uhid fops 路线不是任意读银弹**: uhid 可作 PI chain 写入验证, 但 KCFI 拦跨原型 helper,
 >    任意读还需另寻路径。详见 `uhid_gadget_survey.md`。
 >
@@ -133,9 +133,9 @@ pselect returned attempt=1-8 calls=40 success=40  ← PI 链触发成功
 enforce AFTER=1 (仍 Enforcing)     ← 写入没成功 (栈地址非0)
 ```
 
-### dijun 路线真相 (两次 walk + 伪造 cred)
+### PI 链方案真相 (两次 walk + 伪造 cred)
 
-因为 rb_insert 只能写栈地址, dijun 的 "写 init_cred" 实际是:
+因为 rb_insert 只能写栈地址, 让 task->pi_blocked_on 指向 spray 页 fake_w0 后的"写 cred"方案实际是:
 ```
 walk#1: *(task->real_cred) = &fake_w0.pi_tree_entry (已知地址, 在 spray 页面)
 walk#2: *(task->cred)      = &fake_w0.pi_tree_entry

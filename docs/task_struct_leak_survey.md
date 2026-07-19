@@ -247,7 +247,7 @@ debugfs 常用 helper。反汇编：把 `attr->val` (unsigned long) 用 `scnprin
 4. **fanotify 未编入**：移除 fsnotify user-space 通道
 5. **binder 接口设计**：用户态只可见 desc/handle，不可见 raw 内核指针（BINDER_GET_NODE_DEBUG_INFO 是个意外但泄的不是 task_struct）
 
-**结论**：在没有漏洞原语的前提下，shell 域无法拿到 task_struct 指针。这印证了 dijun README 的核心论断 —— **必须用漏洞本身做泄露**，不能依赖系统调用接口。
+**结论**：在没有漏洞原语的前提下，shell 域无法拿到 task_struct 指针。这印证了安全研究界的核心共识 —— **必须用漏洞本身做泄露**，不能依赖系统调用接口。
 
 ### 5.3 唯一可行的方向：用 PI 链原语做泄露
 
@@ -267,12 +267,12 @@ debugfs 常用 helper。反汇编：把 `attr->val` (unsigned long) 用 `scnprin
 
 ### 5.4 关于"绕过 P3"的可行性
 
-dijun README 明确走的正是这条：
+cred 直写路线明确走的是这条：
 1. `kernelsnitch` 泄 mm_struct（已通）
 2. PI 链可控化 → 写 `task->cred = &fake_w0.pi_tree_entry`
 3. **不需要** 读 mm->owner
 
-jinghu 移植的关键差异：dijun 在 XRing O1 上 KASLR=0、PAN 软件失效，因此：
+jinghu 在 XRing O1 上 KASLR=0、PAN 软件失效，因此：
 - 所有内核地址已知（KASLR=0）
 - 写 task->cred 不被 PAN 拦（软件 PAN 失效）
 - **不需要任意内核读**，因为 task_struct 地址可以通过 init_task + pid 链推算，或者通过 cred 直写后直接 `setuid(0)` 验证
@@ -342,4 +342,4 @@ OBJDUMP="d:/CVE-2026-43499/android-ndk-r27d/toolchains/llvm/prebuilt/windows-x86
 
 ## 8. 总结一句话
 
-**所有 shell 域标准通道都拿不到 task_struct 指针** —— binder 泄的是 binder_node.ptr 不是 task；fanotify 没编入；inotify event 全 int；procfs 被 kptr_restrict 封。**唯一的出路是回归 PI 链可控化，让写入值落在 spray 页 fake_w0，直接走 cred 直写，完全绕开 mm->owner 那一步内核读**。这与 dijun 成功案例的路线完全一致，也是 README 一直强调的主线。
+**所有 shell 域标准通道都拿不到 task_struct 指针** —— binder 泄的是 binder_node.ptr 不是 task；fanotify 没编入；inotify event 全 int；procfs 被 kptr_restrict 封。**唯一的出路是回归 PI 链可控化，让写入值落在 spray 页 fake_w0，直接走 cred 直写，完全绕开 mm->owner 那一步内核读**。

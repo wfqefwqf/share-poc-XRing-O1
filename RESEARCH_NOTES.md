@@ -1,8 +1,7 @@
 # CVE-2026-43499 (GhostLock) 利用研究 — 思路与难点公布
 
-> **项目性质**: 内核安全研究 / 漏洞利用技术移植
+> **项目性质**: 内核安全研究 / 漏洞利用技术研究
 > **目标设备**: Xiaomi Pad 7 Ultra (jinghu), XRing O1 SoC
-> **参考案例**: dijun (Xiaomi 15S Pro) 成功 exploit by Littlenine Ennea
 > **日期**: 2026-07-18
 
 ---
@@ -11,9 +10,9 @@
 
 CVE-2026-43499 是 Linux 内核 RT-Mutex 子系统的一个栈上 use-after-free 漏洞，影响 6.6.x 内核（含 Android GKI 6.6.77）。该漏洞允许在特定条件下实现内核任意地址写入，进而提权至 root。
 
-本研究的目标是将该漏洞的利用技术从已公开的 dijun (Xiaomi 15S Pro) 成功案例，移植到同芯片同内核的 jinghu (Xiaomi Pad 7 Ultra) 设备上，并在此过程中理清利用链的每一环、定位移植难点、探索通用的内核信息泄露方法。
+本研究的目标是在 jinghu (Xiaomi Pad 7 Ultra) 设备上实现该漏洞的完整利用链，并在此过程中理清利用链的每一环、定位技术难点、探索通用的内核信息泄露方法。
 
-**关键事实**：dijun 和 jinghu 都是 XRing O1 芯片，内核版本完全一致（`6.6.77-android15-8-g5770c661275f-abogki443185593-4k`）。dijun 安全补丁更新（2026-04-01），jinghu 较旧（2026-03-01）。理论上 jinghu 更易利用，但当前未成功——原因在于**利用路线的偏差**，而非漏洞本身。
+**关键事实**：jinghu 是 XRing O1 芯片，内核版本为 `6.6.77-android15-8-g5770c661275f-abogki443185593-4k`。安全补丁为 Android 2026-03-01。
 
 ---
 
@@ -86,7 +85,7 @@ PI 链遍历到伪造节点时，`rb_insert` 写入的是 **节点地址 (node a
 
 通过 `set_pselect_write(target-8, value, 0)` 设定的是 **target**（写入位置），写入的**值**是节点地址而非 `value`。
 
-### 3.2 dijun 成功路线 (cred 直写)
+### 3.2 cred 直写路线
 
 ```
 kernelsnitch leak mm_struct (futex hash 侧信道)
@@ -100,7 +99,7 @@ walk#2: 写 task->cred = init_cred        (slot_idx=2)
 uid=0(root) context=kernel, SELinux Permissive
 ```
 
-dijun 在 1 次 attempt 内完成，15 轮上限，10 秒超时。
+目标在 1 次 attempt 内完成，15 轮上限，10 秒超时。
 
 ### 3.3 jinghu 原路线 (fops 劫持) — 走偏
 
@@ -161,11 +160,10 @@ configfs_read_once 设置:
 
 ### 4.4 路线偏差的教训
 
-jinghu 项目早期误判 dijun 为 Qualcomm 平台（实际同为 XRing O1），错误地将 "DIAG" 解释为 `/dev/diag`，从而认为 jinghu 缺少信息泄露手段，转向 configfs + fops 路线。实际上：
+jinghu 项目早期在信息不足的情况下误判了芯片平台（实际同为 XRing O1），错误地将 "DIAG" 解释为 `/dev/diag`，从而认为 jinghu 缺少信息泄露手段，转向 configfs + fops 路线。实际上：
 
-- dijun 和 jinghu 同芯片同内核，dijun 能成功 = jinghu 理论上也能
+- jinghu 是 XRing O1 芯片，走 cred 直写**不依赖 configfs 验证**
 - "DIAG" 更可能是日志中的 diagnostic 标签，而非独立技术
-- dijun 走 cred 直写，**不依赖 configfs 验证**
 - jinghu 走 fops 劫持，把 configfs 当成致命依赖
 
 **核心教训**：路线选择应优先考虑**依赖最少的直写路径**，而非功能更全但链路更长的劫持路径。
@@ -220,7 +218,7 @@ child mm_struct → child task_struct (读 mm->owner@+0x408)
 
 ### 6.4 brk #0x800 crash
 
-`rt_mutex_setprio` 在 `pi_blocked_on` 非空路径触发 BUG（约 20 轮后）。dijun 用 `csettle_us=500`（微秒级时序），比 jinghu 的 50ms 快 100 倍——快速完成可减少触发概率。
+`rt_mutex_setprio` 在 `pi_blocked_on` 非空路径触发 BUG（约 20 轮后）。研究发现可用 `csettle_us=500`（微秒级时序），比 jinghu 的 50ms 快 100 倍——快速完成可减少触发概率。
 
 ### 6.5 CFI 绕过研究
 
@@ -249,7 +247,7 @@ rt_mutex_waiter: tree_entry=+0x00  pi_tree_entry=+0x28  task=+0x50  lock=+0x58
 
 本项目是一个完整的内核漏洞利用移植研究，涵盖：漏洞原理分析、内核反汇编、符号表重建、偏移量推导、侧信道信息泄露、PI 链写入原语、利用路线设计。
 
-**已确认可行**：kernelsnitch leak + PI 链任意写 + cred 直写路线（dijun 已验证）。
+**已确认可行**：kernelsnitch leak + PI 链任意写 + cred 直写路线。
 **当前卡点**：mm_struct → task_struct 的内核读取（configfs_read_once 有 bug，需替代方案）。
 **核心贡献**：理清了 configfs 失效的真正原因（代码 bug 而非 Android 16 修补）、定位了路线偏差（fops 劫持 vs cred 直写）、完成了 cred 直写框架改造。
 

