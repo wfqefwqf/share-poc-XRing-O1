@@ -12,6 +12,16 @@
 > Reference: Littlenine Ennea's successful dijun exploit
 > Nature: Kernel security research / exploit porting
 
+> **Update 2026-07-19**: A large round of offline reverse engineering has revised the
+> blocker analysis. See `README.md` (in Chinese) sections "*当前卡点 (2026-07-19 重新定位)*",
+> "*待办*", and "*联系*" for the full up-to-date picture. New `docs/` files:
+> `p1_code_gap.md`, `kernelsnitch_task_leak.md`, `task_struct_leak_survey.md`,
+> `uhid_gadget_survey.md`. The English version below has not been updated yet and may be
+> stale on the points of (a) which step is the real blocker (task_struct address, not ashmem),
+> (b) how dijun writes cred (spray fake cred via `&fake_w0.pi_tree_entry`, not literal `init_cred`),
+> and (c) uhid fops route is not a "read silver bullet". Trust the Chinese README + the four
+> new docs in case of conflict.
+
 ## Attack Chain
 
 ```

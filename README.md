@@ -93,11 +93,19 @@ kernelsnitch 泄露的是 mm_struct 地址。要写 task->cred 需要知道 task
 
 可用资源: **/dev/uhid (crw-rw-rw-, shell 域可 open, 已验证 fd=3)** — 见下方 "团队对比 + uhid 突破方向"。
 
-### 3. ashmem SELinux 拦截 (真实 blocker)
+> **★ 2026-07-19 更深一层认知** (见上方"当前卡点 2026-07-19 重新定位 §A"):
+> ashmem 墙**不是整条 cred 直写链的真正 blocker**, 只是 configfs_read_once 这条特定读链的 blocker。
+> 整条链真正卡在 **waiter_thread 的 task_struct 地址未知** —— 即使绕开 ashmem, 也还需要任意内核读才能 `mm->owner → task_struct`。
+> 必须用漏洞原语做 task_struct 泄露 (与 dijun README 核心论断一致)。当前最大认知空白: **dijun 在哪一步泄露 task_struct** 仍未知。
 
-`/dev/ashmem` 权限 666 但 SELinux 拦截 shell 域 open。不仅阻止 fops 路线的 configfs 验证, 更致命的是: **团队的整个后段 (pipe physrw 任意 RW + install_android_root 提权) 也建立在 configfs_read_once 之上**, 同样被这堵墙饿死。
+### 3. ashmem SELinux 拦截 (configfs_read_once 读链的 blocker)
 
-cred 直写同样需要读 mm->owner → 同样被这堵墙挡住。
+`/dev/ashmem` 权限 666 但 SELinux 拦截 shell 域 open。后果:
+- 阻止 fops 路线的 configfs 验证
+- 阻止团队的整个后段 (pipe physrw 任意 RW + install_android_root 也建立在 configfs_read_once 之上)
+- 阻止 cred 直写当前框架的 `leak_task_struct` 走 kread_* 路径
+
+但根据 2026-07-19 重新审计, **ashmem 墙不是整条利用链的真正 blocker** —— 即使解决 ashmem (例如以 App 域运行), 仍需解决 task_struct 地址泄露问题才能完成 cred 直写。`docs/p1_code_gap.md` §3 给出新认识。
 
 ### ★ 团队对比 (ayyy7128/CVE-2026-43499-jinghu) + uhid 突破方向
 
@@ -108,6 +116,88 @@ cred 直写同样需要读 mm->owner → 同样被这堵墙挡住。
 3. **团队的 /dev/mem fallback 在 Android 不可行** (CONFIG_STRICT_DEVMEM)。
 4. **突破方向 — uhid fops 重定向**: `/dev/uhid` 是 `crw-rw-rw-` 且 shell 域**可 open** (我们 uhid_test.c 已验证 fd=3), 而 /dev/ashmem 不行。KASLR=0 → `uhid_fops` 地址已知 → GhostLock 写入原语可把 `uhid_fops` 指向 spray 页面 fake fops, 然后 open("/dev/uhid") 触发劫持 → 任意内核 RW, 从而绕过 ashmem缺少的读原语。
    - caveat: 团队的 configfs 任意读依赖 ashmem 专属 name blob 机制, uhid 没有, 需为 uhid fd 另找 `.read`/`.unlocked_ioctl` 的任意 RW gadget。这是**最有价值的未验证假设**, 待设备重连实验。
+
+## 当前卡点 (2026-07-19 重新定位)
+
+> 离线反汇编持续深挖, 推翻了几条早期结论。下面是经过 2026-07-19 整轮审计后的最新认知。详情见 `docs/` 下的四份新报告。
+
+### ★ A. 真正的 blocker 不是 ashmem, 是 task_struct 地址未知
+
+2026-07-18 的卡点描述把 ashmem SELinux 墙当作"真实 blocker", 这是当时视角下看到的最近一层墙。
+深挖后 ashmem 墙**只是 configfs_read_once 读链失效的原因**, 不是整条利用链的 blocker。
+
+整条 cred 直写链路真正的卡点是: **waiter_thread 的 task_struct 地址未知**。
+
+PI 链写入的 target 是任意可控的 (`set_pselect_write(target-8, ...)`), 但要写 `task->cred` 必须设 `target = task + 0x820`, 而 **task_struct 地址必须先泄露出来**。
+
+| 候选 | 状态 | 出处 |
+|---|---|---|
+| /proc/kcore + /dev/mem | ✗ 文件不存在 (CONFIG_PROC_KCORE/DEVMEM=n) | `p1_code_gap.md` |
+| binder ioctl (含 BINDER_GET_NODE_DEBUG_INFO) | ✗ 只泄 binder_node.ptr, 非 task_struct | `task_struct_leak_survey.md` |
+| fanotify | ✗ CONFIG_FANOTIFY **未编入** jinghu 内核 (符号数=0) | `task_struct_leak_survey.md` |
+| inotify | ✗ inotify_event 全 32-bit int, 无内核指针 | `task_struct_leak_survey.md` |
+| procfs (stat/wchan/status/statm) | ✗ kptr_restrict=1 + seq_printf ASCII 转义 | `task_struct_leak_survey.md` |
+| kernelsnitch 扩展 | ✗ futex_hash 第二参数硬编码 `current->mm` | `kernelsnitch_task_leak.md` |
+| mm->owner (+0x408) 反推 | ✗ 需任意内核读, 死结 | `p1_code_gap.md` |
+| init_task + pid 遍历 | ✗ 需任意内核读, 死结 | `p1_code_gap.md` |
+
+**所有标准通道都拿不到 task_struct 指针** —— 这是现代 Android 内核的设计意图 (`kptr_restrict=1` + SELinux + DEVMEM/PROCKCORE/FANOTIFY 未开 + binder 只暴露 desc 不暴露 raw 指针)。必须用漏洞原语做泄露, 与 dijun README 的核心论断一致。
+
+### ★ B. dijun 走的也是 spray fake cred (重要认知纠正)
+
+之前文档说"dijun 写 task->cred = init_cred"是**简化描述**。反汇编 (`RESEARCH_NOTES/rb_insert_analysis.md:220-222`) 明确: PI 链写入的"值"是**节点地址**, 不是任意值。
+
+dijun 的真实做法:
+
+```
+1. 让 task->pi_blocked_on 指向 spray 页面的 fake_w0 (而非栈 waiter)
+2. rb_insert 写入值 = &fake_w0.pi_tree_entry (spray 页面已知固定地址)
+3. 设 target = task->real_cred → *(task->real_cred) = &fake_w0.pi_tree_entry
+4. 设 target = task->cred      → *(task->cred)      = &fake_w0.pi_tree_entry
+5. 在 fake_w0 页面里伪造完整 struct cred (内容复制自 init_cred, uid/gid/euid=0, cap 全开)
+6. 内核访问 task->cred->uid 等字段时, 实际是从 fake_w0 的 pi_tree_entry 之后那块读
+```
+
+**所以 dijun 也是让 cred 指向 spray 页里伪造的 cred**, 不是直接挂内核的 init_cred。这一点对当前代码的影响见 `docs/p1_code_gap.md` §4-5。
+
+### ★ C. 项目最大认知空白 = dijun 怎么拿 task_struct
+
+dijun 在同芯片同内核同偏移上成功了 (README 反复强调), 但**所有现有文档未明说 dijun 在哪一步拿到 task_struct 地址**。
+
+ waiter_thread 的 task_struct 地址必须泄露才能完成 cred 直写 (PI 链 target = task + 0x820)。但前述所有 leak 候选已被排除, dijun 必有某条我们没看到的 leak 路径。
+
+详情见 `docs/kernelsnitch_task_leak.md` §6 "下一步推荐"。最高杠杆的待办 = **重新深读 dijun 的原始 readme / 源码**。
+
+### ★ D. PI 链写入的两个分支 (chain_disasm.txt 复核)
+
+`rt_mutex_adjust_prio_chain` 有两条 rb_insert 写入路径, 走哪条取决于链上节点位置:
+
+| 行 | 指令 | 写入值 | 含义 |
+|---|---|---|---|
+| 193 | `ffffffc081052b50: str x25, [x11, x13]` | `x25 = task->pi_blocked_on` 指向的 waiter 自身 (= `&pi_tree_entry - 0x28`) | parent child 槽指向 waiter |
+| 409 | `ffffffc081052eb0: str x0, [x11, x13]` | `x0 = x25 + 0x28` (= `&pi_tree_entry`) | parent child 槽指向 &pi_tree_entry |
+
+可控化后 (pi_blocked_on → spray fake_w0), 两支写入值都是 spray 页固定已知地址, 仅差 0x28 偏移。
+**伪 cred 起点必须对齐到分支实际写入值**: 是 `fake_w0` 还是 `fake_w0+0x28`, 需在真机验证 (二选一, 不确定时按 `fake_w0` 起点摆, 再偏移试错)。
+
+### ★ E. uhid fops 路线不是"任意读银弹"
+
+`docs/uhid_gadget_survey.md` 反汇编结论:
+
+- `uhid_misc = 0xffffffc082234fc0`, `uhid_misc.fops = 0xffffffc082234fd0` (miscdevice + 0x10), `write_left = 0xffffffc082234fc8`
+- `uhid_fops.unlocked_ioctl = 0` → uhid 不走 ioctl, 命令走 `.write` 路径
+- `put_fake_fops_table` 现版本 (util.c:302+) 在 `FOPS_READ_OFF` 填的是 PI-tree 节点指针 (非函数指针), 用在 uhid 上 open() 即 KCFI panic
+- **KCFI 约束**: `copy_from_kernel_nofault` / `bin2hex` / `simple_read_from_buffer` 原型与 VFS handler 不匹配, 不能直接塞 fops 槽 → 跨原型必 panic
+- **结论**: uhid 路线本身只验证 PI chain 对 miscdevice::fops 写入有效; 任意读还得另寻路径。**它不是任意读银弹**。
+
+### 新增 docs 文件 (2026-07-19)
+
+| 文件 | 内容 |
+|---|---|
+| `docs/p1_code_gap.md` | 审 main_cred.c/util.c/target.h 当前状态 → P1 距离完成还差 5 件事 + 真正 blocker 定位 |
+| `docs/kernelsnitch_task_leak.md` | 审 kernelsnitch 源码 → 不能扩展为泄 task_struct + dijun spray fake cred 认知纠正 + 项目最大认知空白 |
+| `docs/task_struct_leak_survey.md` | 反汇编 binder/fanotify/inotify/procfs 四条标准通道 → 全部排除 (含反汇编证据) |
+| `docs/uhid_gadget_survey.md` | 反汇编 uhid fops 表 + KCFI 约束 → 不能直接挂 helper 函数指针做任意读 |
 
 ## 踩的坑
 
@@ -121,7 +211,8 @@ cred 直写同样需要读 mm->owner → 同样被这堵墙挡住。
 
 ### 坑 2: 路线偏差 (fops 劫持 vs cred 直写)
 
-- dijun 走 cred 直写: mm leaked → 两次 walk 写 task->cred/real_cred=init_cred
+- dijun 走 cred 直写: mm leaked → 两次 walk 写 task->cred/real_cred = `&fake_w0.pi_tree_entry` (spray 页面伪造 cred, 内容复制自 init_cred; 见上方"§B 认知纠正")
+  - 注: 早期说法"= init_cred"是简化描述, 反汇编确认 PI 链写入原语只能写节点地址, 不能直写 init_cred 指针
 - jinghu 走 fops 劫持: 写 ashmem_misc_fops → configfs 验证 → leak_kernel_base → install_root
 - fops 路线依赖 configfs (致命依赖), cred 直写更简洁
 
@@ -295,31 +386,49 @@ do_select 在帧内被调用 (`bl do_select`), 栈寄存器保存区在 sp+0x190
 
 ## 待办 (需要做的工作)
 
-### 优先级 1: 让写入原语可控 (pi_blocked_on → fake_w0)
+### 优先级 0: ★ task_struct 地址泄露 (2026-07-19 重新定位的最高优先级)
+
+cred 直写链路的真正卡点是 **waiter_thread 的 task_struct 地址未知**。
+PI 链 target 任意可控, 但要写 `task->cred` 必须知道 task_struct 地址 (`target = task + 0x820`)。
+
+最高杠杆的下一步 = **重新深读 dijun 的 readme / 源码**, 找 dijun 在哪一步泄露 task_struct。
+- dijun 在同芯片同内核上成功了, 必有某条 task_struct leak 路径我们没看到
+- 详见 `docs/kernelsnitch_task_leak.md` §6 / `docs/p1_code_gap.md` §6
+
+备选方案:
+- 反汇编 `rt_mutex_adjust_prio_chain` 全貌, 看 PI 链传播过程中是否有 task_struct 指针被写到可读处
+- 设计全新侧信道扫 task_struct (task_struct 也在 direct map 区域, 理论可扫; 工程量大)
+
+### 优先级 1: 让写入原语可控 (pi_blocked_on → spray fake_w0)
+
 当前 rb_insert 写栈地址。需让 `task->pi_blocked_on` 指向 spray 页面的 fake_w0:
 - 栈 painting 覆盖栈 waiter 的 pi_blocked_on 字段 (+0x50) 指向 fake_w0
 - 在 fake_w0 页面伪造 cred 结构 (uid/gid/euid/suid/fsuid/egid/sgid/fsgid=0, cap=0)
-- 两次 walk 写 real_cred/cred 指针槽 = &fake_w0.pi_tree_entry
+- **关键细节** (2026-07-19 chain_disasm 反汇编复核): PI 链有两条写入分支 (行 193 写 waiter 自身 / 行 409 写 `&pi_tree_entry`), 伪 cred 起点必须对齐分支实际写入值 (`fake_w0` 或 `fake_w0+0x28`), 需真机验证
+- 两次 walk 写 real_cred/cred 指针槽 = &fake_w0 (或 fake_w0.pi_tree_entry)
 
-### 优先级 2: 解决 mm->owner 读取 (★ 当前最高优先级, 双方共同缺口)
-真实 blocker 是 ashmem SELinux 墙, 不是 configfs 代码 bug。候选突破 (按优先级):
-1. **uhid fops 重定向 bootstrap** (最有价值假设, 目标地址已提取):
-   - 目标: `write_left = uhid_misc.fops - 8 = 0xffffffc082234fc8` (KASLR=0)
-   - GhostLock 写 `*(0xffffffc082234fd0) = &fake_w0.pi_tree_entry` (spray 页面)
-   - 然后 `open("/dev/uhid")` (shell 域可 open, 已验证 fd=3) → 该 fd 的 `file->f_op` 指向 spray fake fops
-   - 在 spray 页面伪造 fake fops 表, 把 `.read`/`.unlocked_ioctl` 指向一个能做任意 RW 的内核 gadget (参数 buf/arg 用户态可控)
-   - 需反汇编 vmlinux 枚举 gadget (团队 configfs name-blob 机制 uhid 没有, 不能直接复用)
-2. 枚举 shell 域可 open 的全部设备, 找比 uhid 更优的 fops 劫持目标 (带可控参数 syscall 的)。
-3. 重新审视 /dev/ashmem 是否可在其他域/路径 open。
-4. 次选: perf_event (被 SELinux 拒)、eBPF (通常不可)、sock_diag 侧信道。
+**两个已知代码 BUG** (见 `docs/p1_code_gap.md`):
+- BUG 1: `fake_w0+0x28` 当前填的是 pi_tree_entry 三字段 {write_pc, write_right, write_left}, 不是合法 cred → 需改成 dijun 方案: write_pc=1/usage=1, write_right=0/gid=0, write_left=0/euid=0
+- BUG 2: walk #2 期望写 `*(SELINUX_ENFORCING) = 0`, 但 PI 链写入值始终是节点地址 (非 0), 反而保持 enforcing → 应删除 walk #2, root 后用 `setenforce 0`
+
+### 优先级 2: uhid fops 重定向 (PI chain 写入验证手段)
+
+★ 2026-07-19 反汇编新认识: uhid 路线**不是任意读银弹**, 只是 PI chain 对 miscdevice::fops 写入的验证手段。
+- 目标写入地址: `write_left = uhid_misc.fops - 8 = 0xffffffc082234fc8` (KASLR=0), 写入后 `*(0xffffffc082234fd0) = &fake_w0.pi_tree_entry`
+- 然后 open("/dev/uhid") (已验证 shell 域可 open, fd=3) 触发 fops 劫持
+- 需要重写 `put_fake_fops_table`: uhid 路线下整张 fake_fops 全填 uhid 原版函数指针 (CFI 不允许跨原型 helper, 不能塞 `copy_from_kernel_nofault` 等)
+- 详见 `docs/uhid_gadget_survey.md`
 
 ### 优先级 3: child mm → parent task
+
 kernelsnitch 在 clone_leak_child 里跑, 泄露的是 child mm。要写 parent cred, 需读 child task->real_parent (+0x628) 拿 parent task_struct。或改 kernelsnitch 在 parent 跑。
 
 ### 优先级 4: 多次 walk (slot 机制)
+
 dijun 用两次 walk (slot_idx=1 写 real_cred, slot_idx=2 写 cred+selinux)。需实现 slot 机制。
 
 ### 优先级 5: brk #0x800 crash
+
 rt_mutex_setprio 在 pi_blocked_on 非空路径触发 BUG (约 20 轮)。dijun 用 csettle_us=500 (微秒级时序) 避免。
 
 ## 文件清单
@@ -334,7 +443,11 @@ share-poc-XRing-O1/
 │   └── disasm/                15个关键函数反汇编 (见下方"rb_insert / PI 链写入路径逆向分析")
 ├── docs/
 │   ├── findings.md        关键发现汇总 (configfs bug/kernelsnitch工作/PI链写入问题)
-│   └── team-compare.md    ★ 团队报告对比 (ayyy7128) + uhid 突破方向
+│   ├── team-compare.md    ★ 团队报告对比 (ayyy7128) + uhid 突破方向
+│   ├── p1_code_gap.md     ★ (2026-07-19) P1 代码审计: 距离 cred 直写完成还差 5 件事, 真正 blocker 定位
+│   ├── kernelsnitch_task_leak.md  ★ (2026-07-19) kernelsnitch 扩展泄 task_struct 可行性: 不能 + dijun 行为纠正
+│   ├── task_struct_leak_survey.md ★ (2026-07-19) 反汇编 4 条标准通道 (binder/fanotify/inotify/procfs) 全部排除
+│   └── uhid_gadget_survey.md  ★ (2026-07-19) uhid fops 反汇编 + KCFI 约束: 不是任意读银弹
 ├── src/                   完整源码 (可编译)
 │   ├── test_minimal.c     分阶段测试程序 (STAGE 1-7 隔离 panic 点)
 │   ├── main_cred.c        cred 直写框架 (run_exploit 3次walk写cred)
@@ -406,7 +519,15 @@ clang --target=aarch64-linux-android35 --sysroot=$NDK/sysroot \
 
 ## 联系
 
-有研究兴趣或思路的欢迎讨论。核心求助点: **让 PI 链写入原语可控 (pi_blocked_on→fake_w0 + 伪造 cred) + mm->owner 内核读取**。
+有研究兴趣或思路的欢迎讨论。**当前最高核心求助点 (2026-07-19 重新定位)**: **dijun 在哪一步泄露 task_struct 地址?**
+
+- dijun 在同芯片同内核上成功 (README 反复强调 dijun 是成功案例)
+- waiter_thread 的 task_struct 地址必须泄露才能完成 cred 直写 (PI 链 target = task + 0x820)
+- 所有标准通道 (kcore/devmem/binder/fanotify/inotify/procfs/kernelsnitch扩展) 全部排除
+- dijun 必有某条 leak 路径我们没看到
+- 详见 `docs/kernelsnitch_task_leak.md` §6 / `docs/p1_code_gap.md` §6
+
+次核心求助点: 让 PI 链写入原语可控 (pi_blocked_on→fake_w0 + 伪造 cred + 修 walk #1/#2 BUG)。
 
 ---
 

